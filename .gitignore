@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Build outputs
+dist/
+out/
+
+# Runtime data
+*.db
+*.db-wal
+*.db-shm
+chattypad.db
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Electrobun
+.electrobun-cache/

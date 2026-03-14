@@ -22,10 +22,10 @@
 
 **Purpose**: Initialize the TypeScript Electrobun project structure and developer tooling.
 
-- [ ] T001 Create the desktop application directory structure in `src/main/`, `src/renderer/`, `src/shared/`, `tests/unit/`, and `tests/integration/`
-- [ ] T002 Initialize Bun and Electrobun project configuration in `package.json`, `bunfig.toml`, and `tsconfig.json`
-- [ ] T003 [P] Add TypeScript-aware lint and format configuration in `.gitignore` and `package.json`
-- [ ] T004 [P] Create application entry points in `src/main/app/main.ts` and `src/renderer/main.ts`
+- [X] T001 Create the desktop application directory structure in `src/main/`, `src/renderer/`, `src/shared/`, `tests/unit/`, and `tests/integration/`
+- [X] T002 Initialize Bun and Electrobun project configuration in `package.json`, `bunfig.toml`, and `tsconfig.json`
+- [X] T003 [P] Add TypeScript-aware lint and format configuration in `.gitignore` and `package.json`
+- [X] T004 [P] Create application entry points in `src/main/app/main.ts` and `src/renderer/main.ts`
 
 ---
 
@@ -35,13 +35,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create shared workspace contracts and domain types in `src/shared/contracts/workspace.ts` and `src/shared/models/workspace.ts`
-- [ ] T006 [P] Implement SQLite connection and schema bootstrap in `src/main/database/sqlite.ts` and `src/main/database/schema.ts`
-- [ ] T007 [P] Implement project, thread, and message repositories in `src/main/database/workspace-repository.ts`
-- [ ] T008 [P] Add seed workspace data for manual validation in `src/main/database/seed.ts`
-- [ ] T009 Implement workspace service orchestration for loading threads and messages in `src/main/app/workspace-service.ts`
-- [ ] T010 Implement IPC registration and structured error mapping in `src/main/ipc/workspace-ipc.ts`
-- [ ] T011 [P] Add foundational persistence and validation tests in `tests/unit/workspace-repository.test.ts`
+- [X] T005 Create shared workspace contracts and domain types in `src/shared/contracts/workspace.ts` and `src/shared/models/workspace.ts`
+- [X] T006 [P] Implement SQLite connection and schema bootstrap in `src/main/database/sqlite.ts` and `src/main/database/schema.ts`
+- [X] T007 [P] Implement project, thread, and message repositories in `src/main/database/workspace-repository.ts`
+- [X] T008 [P] Add seed workspace data for manual validation in `src/main/database/seed.ts`
+- [X] T009 Implement workspace service orchestration for loading threads and messages in `src/main/app/workspace-service.ts`
+- [X] T010 Implement IPC registration and structured error mapping in `src/main/ipc/workspace-ipc.ts`
+- [X] T011 [P] Add foundational persistence and validation tests in `tests/unit/workspace-repository.test.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -55,15 +55,15 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add integration coverage for workspace load and thread selection in `tests/integration/workspace-navigation.test.ts`
+- [X] T012 [P] [US1] Add integration coverage for workspace load and thread selection in `tests/integration/workspace-navigation.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Implement renderer workspace state for sidebar data and active thread selection in `src/renderer/state/workspace-store.ts`
-- [ ] T014 [P] [US1] Build the project/thread sidebar UI in `src/renderer/components/sidebar.tsx`
-- [ ] T015 [P] [US1] Build the main workspace shell and empty-state view in `src/renderer/components/workspace-shell.tsx`
-- [ ] T016 [US1] Connect `workspace:load` and `thread:open` flows to the renderer state in `src/renderer/features/workspace/workspace-controller.ts`
-- [ ] T017 [US1] Compose the initial desktop workspace screen in `src/renderer/features/workspace/workspace-screen.tsx`
+- [X] T013 [P] [US1] Implement renderer workspace state for sidebar data and active thread selection in `src/renderer/state/workspace-store.ts`
+- [X] T014 [P] [US1] Build the project/thread sidebar UI in `src/renderer/components/sidebar.tsx`
+- [X] T015 [P] [US1] Build the main workspace shell and empty-state view in `src/renderer/components/workspace-shell.tsx`
+- [X] T016 [US1] Connect `workspace:load` and `thread:open` flows to the renderer state in `src/renderer/features/workspace/workspace-controller.ts`
+- [X] T017 [US1] Compose the initial desktop workspace screen in `src/renderer/features/workspace/workspace-screen.tsx`
 - [ ] T018 [US1] Validate User Story 1 using the sidebar flow in `E:\projects\own\chattypad\specs\001-desktop-chat-app\quickstart.md`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
@@ -78,15 +78,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T019 [P] [US2] Add service and renderer integration coverage for chronological message loading in `tests/integration/thread-history.test.ts`
+- [X] T019 [P] [US2] Add service and renderer integration coverage for chronological message loading in `tests/integration/thread-history.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Add ordered message query and thread detail mapping in `src/main/database/workspace-repository.ts`
-- [ ] T021 [P] [US2] Implement conversation history list rendering in `src/renderer/components/message-history.tsx`
-- [ ] T022 [P] [US2] Add active thread header and status presentation in `src/renderer/components/thread-header.tsx`
-- [ ] T023 [US2] Connect thread detail data to the main conversation pane in `src/renderer/features/workspace/workspace-screen.tsx`
-- [ ] T024 [US2] Handle missing threads and unreadable data states in `src/main/app/workspace-service.ts` and `src/renderer/components/workspace-shell.tsx`
+- [X] T020 [P] [US2] Add ordered message query and thread detail mapping in `src/main/database/workspace-repository.ts`
+- [X] T021 [P] [US2] Implement conversation history list rendering in `src/renderer/components/message-history.tsx`
+- [X] T022 [P] [US2] Add active thread header and status presentation in `src/renderer/components/thread-header.tsx`
+- [X] T023 [US2] Connect thread detail data to the main conversation pane in `src/renderer/features/workspace/workspace-screen.tsx`
+- [X] T024 [US2] Handle missing threads and unreadable data states in `src/main/app/workspace-service.ts` and `src/renderer/components/workspace-shell.tsx`
 - [ ] T025 [US2] Validate User Story 2 using the history flow in `E:\projects\own\chattypad\specs\001-desktop-chat-app\quickstart.md`
 
 **Checkpoint**: At this point, User Stories 1 and 2 should both work independently
@@ -101,16 +101,16 @@
 
 ### Tests for User Story 3
 
-- [ ] T026 [P] [US3] Add message creation and validation coverage in `tests/unit/message-service.test.ts`
-- [ ] T027 [P] [US3] Add integration coverage for message sending and persistence across reload in `tests/integration/message-send.test.ts`
+- [X] T026 [P] [US3] Add message creation and validation coverage in `tests/unit/message-service.test.ts`
+- [X] T027 [P] [US3] Add integration coverage for message sending and persistence across reload in `tests/integration/message-send.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T028 [P] [US3] Implement message creation, validation, and thread timestamp updates in `src/main/app/message-service.ts`
-- [ ] T029 [P] [US3] Implement `message:send` IPC handling in `src/main/ipc/workspace-ipc.ts`
-- [ ] T030 [P] [US3] Build the compose box and send action UI in `src/renderer/components/message-composer.tsx`
-- [ ] T031 [US3] Connect message submission and refresh behavior in `src/renderer/features/workspace/workspace-controller.ts`
-- [ ] T032 [US3] Persist and surface send validation errors in `src/renderer/state/workspace-store.ts` and `src/renderer/components/message-composer.tsx`
+- [X] T028 [P] [US3] Implement message creation, validation, and thread timestamp updates in `src/main/app/message-service.ts`
+- [X] T029 [P] [US3] Implement `message:send` IPC handling in `src/main/ipc/workspace-ipc.ts`
+- [X] T030 [P] [US3] Build the compose box and send action UI in `src/renderer/components/message-composer.tsx`
+- [X] T031 [US3] Connect message submission and refresh behavior in `src/renderer/features/workspace/workspace-controller.ts`
+- [X] T032 [US3] Persist and surface send validation errors in `src/renderer/state/workspace-store.ts` and `src/renderer/components/message-composer.tsx`
 - [ ] T033 [US3] Validate User Story 3 using the message send flow in `E:\projects\own\chattypad\specs\001-desktop-chat-app\quickstart.md`
 
 **Checkpoint**: All user stories should now be independently functional
@@ -121,10 +121,10 @@
 
 **Purpose**: Finalize reliability, documentation alignment, and cross-story quality.
 
-- [ ] T034 [P] Improve startup and thread-switch performance for the target dataset in `src/main/app/workspace-service.ts` and `src/renderer/state/workspace-store.ts`
-- [ ] T035 [P] Add corrupted-database recovery handling and user-safe messaging in `src/main/database/sqlite.ts` and `src/renderer/components/workspace-shell.tsx`
+- [X] T034 [P] Improve startup and thread-switch performance for the target dataset in `src/main/app/workspace-service.ts` and `src/renderer/state/workspace-store.ts`
+- [X] T035 [P] Add corrupted-database recovery handling and user-safe messaging in `src/main/database/sqlite.ts` and `src/renderer/components/workspace-shell.tsx`
 - [ ] T036 Run the full quickstart validation and record any implementation notes in `E:\projects\own\chattypad\specs\001-desktop-chat-app\quickstart.md`
-- [ ] T037 Update delivery guidance and agent context if implementation paths changed in `AGENTS.md`
+- [X] T037 Update delivery guidance and agent context if implementation paths changed in `AGENTS.md`
 
 ---
 
