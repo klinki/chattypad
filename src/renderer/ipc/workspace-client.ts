@@ -3,6 +3,7 @@
  * In production, calls are made through the Electrobun renderer bridge.
  * The interface is designed to be swappable for tests.
  */
+import Electrobun, { Electroview } from "electrobun/view";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -42,60 +43,48 @@ interface WorkspaceRendererRpc {
   request: WorkspaceRpcRequestProxy;
 }
 
-interface ElectrobunViewRuntime {
-  Electroview: {
-    new (options: { rpc: WorkspaceRendererRpc }): unknown;
-    defineRPC<Schema extends WorkspaceElectrobunRpcSchema>(config: {
-      handlers: {
-        requests: Record<never, never>;
-        messages: Record<never, never>;
-      };
-    }): WorkspaceRendererRpc;
-  };
-}
-
-let bridgePromise: Promise<WorkspaceRpcRequestProxy | null> | null = null;
+let bridge: WorkspaceRpcRequestProxy | null | undefined;
 
 function hasElectrobunRuntime(): boolean {
-  const globalScope = globalThis as Record<string, unknown>;
+  if (typeof window === "undefined") {
+    return false;
+  }
+
   return (
-    typeof globalScope.__electrobun === "object" &&
-    globalScope.__electrobun !== null &&
-    typeof globalScope.__electrobunWebviewId === "number" &&
-    typeof globalScope.__electrobunRpcSocketPort === "number"
+    typeof window.__electrobun === "object" &&
+    window.__electrobun !== null &&
+    typeof window.__electrobunWebviewId === "number" &&
+    typeof window.__electrobunRpcSocketPort === "number"
   );
 }
 
-async function getBridge(): Promise<WorkspaceRpcRequestProxy | null> {
-  if (!bridgePromise) {
-    bridgePromise = (async () => {
-      if (!hasElectrobunRuntime()) {
-        return null;
-      }
-
-      try {
-        const dynamicImport = new Function(
-          "specifier",
-          "return import(specifier);"
-        ) as (specifier: string) => Promise<ElectrobunViewRuntime>;
-        const { Electroview } = await dynamicImport("electrobun/view");
-        const rpc = Electroview.defineRPC<WorkspaceElectrobunRpcSchema>({
-          handlers: {
-            requests: {},
-            messages: {},
-          },
-        });
-
-        new Electroview({ rpc });
-
-        return rpc.request;
-      } catch {
-        return null;
-      }
-    })();
+function getBridge(): WorkspaceRpcRequestProxy | null {
+  if (bridge !== undefined) {
+    return bridge;
   }
 
-  return bridgePromise;
+  if (!hasElectrobunRuntime()) {
+    bridge = null;
+    return bridge;
+  }
+
+  try {
+    const rpc = Electroview.defineRPC<WorkspaceElectrobunRpcSchema>({
+      maxRequestTime: 30000,
+      handlers: {
+        requests: {},
+        messages: {},
+      },
+    });
+
+    const electrobun = new Electrobun.Electroview({ rpc });
+    bridge = electrobun.rpc?.request ?? rpc.request;
+  } catch (error) {
+    console.error("Failed to initialize the Electrobun IPC bridge.", error);
+    bridge = null;
+  }
+
+  return bridge;
 }
 
 function unavailableBridgeResult<T>(): IpcResult<T> {
@@ -113,7 +102,7 @@ async function invokeIpc<Channel extends IpcChannel>(
   channel: Channel,
   payload?: WorkspaceRequestMap[Channel]["params"]
 ): Promise<WorkspaceRequestMap[Channel]["response"]> {
-  const bridge = await getBridge();
+  const bridge = getBridge();
 
   if (!bridge) {
     return unavailableBridgeResult() as WorkspaceRequestMap[Channel]["response"];

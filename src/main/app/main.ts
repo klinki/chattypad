@@ -4,9 +4,8 @@
  */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
 import { initializeSchema } from "../database/schema.js";
-import { getDatabase } from "../database/sqlite.js";
+import { getDatabase, resolveDatabasePath } from "../database/sqlite.js";
 import { seedDevelopmentData } from "../database/seed.js";
 import type { WorkspaceElectrobunRpcSchema } from "../../shared/contracts/electrobun-rpc.js";
 import {
@@ -14,8 +13,12 @@ import {
   type WorkspaceRpcRequestHandlers,
 } from "../ipc/workspace-ipc.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rendererEntryPath = path.resolve(__dirname, "../../../dist/renderer/index.html");
+const debugStartupEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
+const startupLogPath = path.resolve(
+  process.env["TEMP"] ?? process.cwd(),
+  "chattypad",
+  "startup.log"
+);
 
 interface ElectrobunRuntimeModule {
   BrowserWindow: new (options: {
@@ -47,79 +50,147 @@ interface ElectrobunRuntimeModule {
   ) => unknown;
 }
 
+function formatError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack ?? `${error.name}: ${error.message}`;
+  }
+
+  return typeof error === "string" ? error : JSON.stringify(error);
+}
+
+function appendStartupLog(level: "INFO" | "ERROR", message: string): void {
+  fs.mkdirSync(path.dirname(startupLogPath), { recursive: true });
+  fs.appendFileSync(
+    startupLogPath,
+    `${new Date().toISOString()} [${level}] ${message}\n`,
+    "utf8"
+  );
+}
+
+function logStartup(message: string, details?: string): void {
+  console.log(`[startup] ${message}`);
+  appendStartupLog("INFO", details ? `${message}\n${details}` : message);
+
+  if (details && debugStartupEnabled) {
+    console.log(details);
+  }
+}
+
+function logStartupError(message: string, error: unknown): void {
+  const details = formatError(error);
+  console.error(`[startup] ${message}`);
+  console.error(details);
+  appendStartupLog("ERROR", `${message}\n${details}`);
+}
+
+function initializeStartupLogging(): void {
+  fs.mkdirSync(path.dirname(startupLogPath), { recursive: true });
+  fs.writeFileSync(startupLogPath, "", "utf8");
+
+  if (debugStartupEnabled) {
+    console.log(`[startup] Debug log file: ${startupLogPath}`);
+    appendStartupLog("INFO", "Debug logging enabled");
+  }
+}
+
+initializeStartupLogging();
+logStartup("Main module loaded");
+
+process.on("uncaughtException", (error) => {
+  logStartupError("Uncaught exception", error);
+});
+
+process.on("unhandledRejection", (reason) => {
+  logStartupError("Unhandled promise rejection", reason);
+});
+
 async function loadElectrobunRuntime(): Promise<ElectrobunRuntimeModule | null> {
+  logStartup("Loading Electrobun runtime module");
+
   try {
     const dynamicImport = new Function(
       "specifier",
       "return import(specifier);"
     ) as (specifier: string) => Promise<ElectrobunRuntimeModule>;
 
-    return await dynamicImport("electrobun/bun");
-  } catch {
+    const runtime = await dynamicImport("electrobun/bun");
+    logStartup("Electrobun runtime module loaded");
+    return runtime;
+  } catch (error) {
+    logStartupError('Failed to import "electrobun/bun"', error);
     return null;
   }
 }
 
-function resolveRendererUrl(): string {
-  if (!fs.existsSync(rendererEntryPath)) {
-    throw new Error(
-      `Renderer HTML not found at ${rendererEntryPath}. Run "npm run build" before launching the desktop shell.`
-    );
-  }
-
-  return pathToFileURL(rendererEntryPath).href;
-}
-
 async function bootstrap(): Promise<void> {
-  // Initialize the local SQLite database and schema
+  logStartup(
+    "Bootstrapping ChattyPad",
+    debugStartupEnabled
+      ? `cwd=${process.cwd()}\ndatabase=${resolveDatabasePath()}`
+      : undefined
+  );
+
+  logStartup("Opening SQLite database");
   const db = getDatabase();
+  logStartup("SQLite database ready");
+
+  logStartup("Initializing database schema");
   initializeSchema(db);
+  logStartup("Database schema initialized");
+
+  logStartup("Seeding development data if needed");
   seedDevelopmentData(db);
+  logStartup("Development seed step complete");
 
   const electrobunRuntime = await loadElectrobunRuntime();
-  const rendererUrl = resolveRendererUrl();
+
+  logStartup("Creating workspace RPC request handlers");
   const requestHandlers = createWorkspaceRpcRequestHandlers(db);
 
-  if (electrobunRuntime) {
-    const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
-      "bun",
-      {
-        handlers: {
-          requests: requestHandlers,
-          messages: {},
-        },
-      }
+  if (!electrobunRuntime) {
+    throw new Error(
+      'Electrobun runtime is not available. Launch ChattyPad through "electrobun dev" (or "npm run start"), not plain "bun run".'
     );
-
-    new electrobunRuntime.BrowserWindow({
-      url: rendererUrl,
-      html: null,
-      preload: null,
-      renderer: "cef",
-      rpc,
-      title: "ChattyPad",
-      frame: {
-        x: 0,
-        y: 0,
-        width: 1200,
-        height: 800,
-      },
-      titleBarStyle: "default",
-      transparent: false,
-      navigationRules: null,
-      sandbox: false,
-    });
-    console.log(`ChattyPad window created from ${rendererEntryPath}`);
-    return;
   }
 
-  console.warn(
-    "Electrobun runtime is not installed in this environment. The renderer build was found on disk, but no desktop window was created."
+  logStartup("Defining Electrobun RPC bridge");
+  const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
+    "bun",
+    {
+      handlers: {
+        requests: requestHandlers,
+        messages: {},
+      },
+    }
   );
-  console.log(`Renderer assets expected at ${rendererEntryPath}`);
+
+  logStartup(
+    "Creating BrowserWindow",
+    debugStartupEnabled ? "url=views://renderer/index.html" : undefined
+  );
+  new electrobunRuntime.BrowserWindow({
+    url: "views://renderer/index.html",
+    html: null,
+    preload: null,
+    renderer: "cef",
+    rpc,
+    title: "ChattyPad",
+    frame: {
+      x: 0,
+      y: 0,
+      width: 1200,
+      height: 800,
+    },
+    titleBarStyle: "default",
+    transparent: false,
+    navigationRules: null,
+    sandbox: false,
+  });
+  logStartup("BrowserWindow created");
 }
 
 bootstrap().catch((err) => {
+  logStartupError("Fatal error during bootstrap", err);
   console.error("Fatal error during bootstrap:", err);
   process.exit(1);
 });

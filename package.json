@@ -5,8 +5,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node scripts/build-renderer.mjs && bun run src/main/app/main.ts",
-    "build": "node scripts/build-renderer.mjs",
+    "start": "electrobun dev",
+    "start:debug": "set CHATTYPAD_DEBUG=1&& electrobun dev",
+    "dev": "electrobun dev --watch",
+    "build": "electrobun build",
+    "build:renderer": "node scripts/build-renderer.mjs",
     "test": "bun test",
     "lint": "tsc --noEmit"
   },

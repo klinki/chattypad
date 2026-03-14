@@ -22,6 +22,8 @@ import type {
   ThreadOpenRequest,
 } from "../../shared/contracts/electrobun-rpc.js";
 
+const debugIpcEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
+
 export interface WorkspaceHandlers {
   handleWorkspaceLoad: () => IpcResult<WorkspaceSnapshot>;
   handleThreadOpen: (threadId: string) => IpcResult<ActiveThreadDetail>;
@@ -69,11 +71,33 @@ export function createWorkspaceRpcRequestHandlers(
 ): WorkspaceRpcRequestHandlers {
   const handlers = createWorkspaceHandlers(db);
 
+  function logRequest(channel: string, detail?: string): void {
+    if (!debugIpcEnabled) {
+      return;
+    }
+
+    console.log(`[ipc] ${channel}${detail ? ` ${detail}` : ""}`);
+  }
+
   return {
-    [CHANNELS.WORKSPACE_LOAD]: () => handlers.handleWorkspaceLoad(),
+    [CHANNELS.WORKSPACE_LOAD]: () => {
+      logRequest(CHANNELS.WORKSPACE_LOAD, "request");
+      const result = handlers.handleWorkspaceLoad();
+      logRequest(
+        CHANNELS.WORKSPACE_LOAD,
+        result.success ? "success" : `error ${result.error.code}`
+      );
+      return result;
+    },
     [CHANNELS.THREAD_OPEN]: (payload) => {
       const request = normalizeThreadOpenRequest(payload);
-      return handlers.handleThreadOpen(request.threadId);
+      logRequest(CHANNELS.THREAD_OPEN, `request threadId=${request.threadId}`);
+      const result = handlers.handleThreadOpen(request.threadId);
+      logRequest(
+        CHANNELS.THREAD_OPEN,
+        result.success ? "success" : `error ${result.error.code}`
+      );
+      return result;
     },
     [CHANNELS.MESSAGE_SEND]: (payload) => {
       const request = {
@@ -82,11 +106,17 @@ export function createWorkspaceRpcRequestHandlers(
         role: typeof payload?.role === "string" ? payload.role : "user",
       };
 
-      return handlers.handleMessageSend(
+      logRequest(CHANNELS.MESSAGE_SEND, `request threadId=${request.threadId}`);
+      const result = handlers.handleMessageSend(
         request.threadId,
         request.content,
         request.role
       );
+      logRequest(
+        CHANNELS.MESSAGE_SEND,
+        result.success ? "success" : `error ${result.error.code}`
+      );
+      return result;
     },
   };
 }
