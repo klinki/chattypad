@@ -75,16 +75,6 @@
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
-## Assumptions
-
-<!--
-  ACTION REQUIRED: Record reasonable defaults, dependencies, and explicit
-  decisions made to keep the specification concrete.
--->
-
-- [Assumption about user behavior, business rule, or external dependency]
-- [Assumption about scope boundary or fallback behavior]
-
 ## Requirements *(mandatory)*
 
 <!--
@@ -109,16 +99,6 @@
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
-
-## Out of Scope
-
-<!--
-  ACTION REQUIRED: List adjacent ideas that are intentionally excluded from this
-  feature so planning and implementation stay bounded.
--->
-
-- [Explicitly excluded capability or scenario]
-- [Deferred enhancement or separate follow-up]
 
 ## Success Criteria *(mandatory)*
 

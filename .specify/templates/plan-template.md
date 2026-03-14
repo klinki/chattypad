@@ -31,16 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- Scope is derived directly from `spec.md`; no additional user stories or hidden
-  requirements are introduced.
-- Each user story remains independently deliverable and has a concrete
-  validation path (automated test, quickstart flow, or explicit manual check).
-- All assumptions, open questions, and `NEEDS CLARIFICATION` items are listed
-  and either resolved in Phase 0 or called out as blocking.
-- The design uses the simplest structure that satisfies the spec; any extra
-  complexity is documented in Complexity Tracking with rationale.
-- Documentation and agent-context impacts are identified, including updates to
-  templates, quickstart material, and any agent-specific guidance files.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
