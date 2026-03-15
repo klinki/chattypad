@@ -61,10 +61,10 @@ export function EmptyState(): React.ReactElement {
       }}
     >
       <div style={{ fontSize: 32 }}>💬</div>
-      <div style={{ fontSize: 16, fontWeight: 600, color: "#a6adc8" }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8" }}>
         No active thread
       </div>
-      <div style={{ fontSize: 13, maxWidth: 280, textAlign: "center" }}>
+      <div style={{ fontSize: 14, maxWidth: 280, textAlign: "center" }}>
         Choose a project and open a chat thread from the left panel to view its
         conversation.
       </div>
@@ -86,10 +86,10 @@ export function WorkspaceEmptyState(): React.ReactElement {
       }}
     >
       <div style={{ fontSize: 32 }}>🗂️</div>
-      <div style={{ fontSize: 16, fontWeight: 600, color: "#a6adc8" }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8" }}>
         No workspace data yet
       </div>
-      <div style={{ fontSize: 13, maxWidth: 320, textAlign: "center" }}>
+      <div style={{ fontSize: 14, maxWidth: 320, textAlign: "center" }}>
         The local workspace is empty. Start the app on a Bun + Electrobun
         workstation to generate or seed the SQLite data, then reopen the
         workspace.
@@ -107,7 +107,7 @@ function LoadingState(): React.ReactElement {
         alignItems: "center",
         justifyContent: "center",
         color: "#585b70",
-        fontSize: 14,
+        fontSize: 15,
       }}
     >
       Loading workspace…
@@ -131,20 +131,20 @@ function ErrorState({ error }: { error: IpcError }): React.ReactElement {
       }}
     >
       <div style={{ fontSize: 24 }}>⚠️</div>
-      <div style={{ fontSize: 15, fontWeight: 600 }}>
+      <div style={{ fontSize: 17, fontWeight: 600 }}>
         {isCorruptDatabase
           ? "Saved Data Needs Recovery"
           : error.recoverable
             ? "Workspace Unavailable"
             : "Fatal Error"}
       </div>
-      <div style={{ fontSize: 13, maxWidth: 300, textAlign: "center", color: "#a6adc8" }}>
+      <div style={{ fontSize: 14, maxWidth: 300, textAlign: "center", color: "#a6adc8" }}>
         {error.message}
       </div>
       {isCorruptDatabase && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 13,
             maxWidth: 340,
             textAlign: "center",
             color: "#bac2de",
@@ -156,7 +156,7 @@ function ErrorState({ error }: { error: IpcError }): React.ReactElement {
           database.
         </div>
       )}
-      <div style={{ fontSize: 11, color: "#585b70" }}>code: {error.code}</div>
+      <div style={{ fontSize: 12, color: "#585b70" }}>code: {error.code}</div>
     </div>
   );
 }

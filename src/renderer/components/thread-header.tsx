@@ -23,10 +23,10 @@ export function ThreadHeader({ thread }: ThreadHeaderProps): React.ReactElement 
         flexShrink: 0,
       }}
     >
-      <h1 style={{ fontSize: 15, fontWeight: 600, color: "#cdd6f4", margin: 0 }}>
+      <h1 style={{ fontSize: 18, fontWeight: 600, color: "#cdd6f4", margin: 0 }}>
         {thread.title}
       </h1>
-      <div style={{ fontSize: 11, color: "#585b70", marginTop: 2 }}>
+      <div style={{ fontSize: 13, color: "#585b70", marginTop: 4 }}>
         {lastActivityLabel}
       </div>
     </header>

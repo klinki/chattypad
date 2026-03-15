@@ -25,7 +25,7 @@ export function MessageHistory({ messages }: MessageHistoryProps): React.ReactEl
           alignItems: "center",
           justifyContent: "center",
           color: "#585b70",
-          fontSize: 13,
+          fontSize: 14,
         }}
       >
         No messages yet. Start the conversation below.
@@ -74,9 +74,9 @@ function MessageBubble({ message }: { message: MessageView }): React.ReactElemen
     >
       <div
         style={{
-          fontSize: 11,
+          fontSize: 12,
           color: "#585b70",
-          marginBottom: 3,
+          marginBottom: 4,
           paddingLeft: isUser ? 0 : 4,
           paddingRight: isUser ? 4 : 0,
         }}
@@ -88,9 +88,9 @@ function MessageBubble({ message }: { message: MessageView }): React.ReactElemen
           background: bubbleColor,
           color: "#cdd6f4",
           borderRadius: isUser ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
-          padding: "8px 12px",
-          fontSize: 14,
-          lineHeight: 1.5,
+          padding: "10px 14px",
+          fontSize: 15,
+          lineHeight: 1.6,
           wordBreak: "break-word",
           whiteSpace: "pre-wrap",
         }}

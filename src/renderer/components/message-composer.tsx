@@ -55,18 +55,18 @@ export function MessageComposer({
         <div
           role="alert"
           style={{
-            fontSize: 12,
+            fontSize: 13,
             color: "#f38ba8",
             background: "#33182a",
-            padding: "6px 10px",
-            borderRadius: 4,
+            padding: "8px 10px",
+            borderRadius: 6,
           }}
         >
           {sendError.message}
         </div>
       )}
       {showInlineHint && (
-        <div style={{ fontSize: 12, color: "#f9e2af" }}>
+        <div style={{ fontSize: 13, color: "#f9e2af" }}>
           Enter at least one non-whitespace character to send a message.
         </div>
       )}
@@ -85,9 +85,9 @@ export function MessageComposer({
             background: "#313244",
             color: "#cdd6f4",
             border: "1px solid #45475a",
-            borderRadius: 6,
-            padding: "8px 10px",
-            fontSize: 14,
+            borderRadius: 8,
+            padding: "10px 12px",
+            fontSize: 15,
             outline: "none",
             fontFamily: "inherit",
           }}
@@ -103,12 +103,12 @@ export function MessageComposer({
             background: canSend ? "#1e66f5" : "#313244",
             color: canSend ? "#ffffff" : "#6c7086",
             border: "none",
-            borderRadius: 6,
+            borderRadius: 8,
             cursor: canSend ? "pointer" : "not-allowed",
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 600,
             flexShrink: 0,
-            height: 38,
+            height: 42,
           }}
         >
           Send
