@@ -10,6 +10,15 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
   let latestSendRequestId = 0;
   let intendedThreadId: string | null = null;
 
+  async function applySnapshot(snapshot: Parameters<typeof workspaceStore.setSnapshot>[0]): Promise<void> {
+    intendedThreadId = snapshot.activeThreadId;
+    workspaceStore.setSnapshot(snapshot);
+
+    if (snapshot.activeThreadId) {
+      await openThread(snapshot.activeThreadId);
+    }
+  }
+
   async function openThread(threadId: string): Promise<void> {
     const requestId = ++latestOpenRequestId;
     intendedThreadId = threadId;
@@ -31,14 +40,34 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     workspaceStore.setLoading(true);
     const result = await client.loadWorkspace();
     if (result.success) {
-      workspaceStore.setSnapshot(result.data);
-
-      if (result.data.activeThreadId) {
-        await openThread(result.data.activeThreadId);
-      }
+      await applySnapshot(result.data);
     } else {
       workspaceStore.setError(result.error);
     }
+  }
+
+  async function createProject(name: string): Promise<boolean> {
+    workspaceStore.setLoading(true);
+    const result = await client.createProject(name);
+    if (result.success) {
+      await applySnapshot(result.data);
+      return true;
+    }
+
+    workspaceStore.setError(result.error);
+    return false;
+  }
+
+  async function deleteProject(projectId: string): Promise<boolean> {
+    workspaceStore.setLoading(true);
+    const result = await client.deleteProject(projectId);
+    if (result.success) {
+      await applySnapshot(result.data);
+      return true;
+    }
+
+    workspaceStore.setError(result.error);
+    return false;
   }
 
   async function sendMessage(threadId: string, content: string): Promise<void> {
@@ -60,6 +89,8 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
 
   return {
     loadWorkspace,
+    createProject,
+    deleteProject,
     openThread,
     sendMessage,
   };

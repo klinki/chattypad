@@ -4,14 +4,19 @@
  */
 import type { Database } from "bun:sqlite";
 import {
+  deleteProject,
   getAllProjects,
   getAllThreadsByProject,
+  getProjectById,
+  getNextProjectSortOrder,
   getThreadById,
   getMessagesByThread,
+  insertProject,
   projectToSummary,
   threadToSummary,
   messageToView,
 } from "../database/workspace-repository.js";
+import type { Project } from "../../shared/models/workspace.js";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -30,31 +35,105 @@ function getInitialActiveThreadId(db: Database, projectIds: string[]): string | 
   return null;
 }
 
+function buildWorkspaceSnapshot(db: Database): WorkspaceSnapshot {
+  const projects = getAllProjects(db);
+  const threadsByProject: Record<string, ReturnType<typeof threadToSummary>[]> = {};
+
+  for (const project of projects) {
+    const threads = getAllThreadsByProject(db, project.id);
+    threadsByProject[project.id] = threads.map(threadToSummary);
+  }
+
+  return {
+    projects: projects.map(projectToSummary),
+    threadsByProject,
+    activeThreadId: getInitialActiveThreadId(
+      db,
+      projects.map((project) => project.id)
+    ),
+  };
+}
+
 /**
  * Loads the full workspace snapshot for the sidebar.
  * FR-002, FR-012: Returns all projects and their threads; empty collections if none exist.
  */
 export function loadWorkspace(db: Database): IpcResult<WorkspaceSnapshot> {
   return withIpcError(() => {
-    const projects = getAllProjects(db);
-    const threadsByProject: Record<string, ReturnType<typeof threadToSummary>[]> = {};
-
-    for (const project of projects) {
-      const threads = getAllThreadsByProject(db, project.id);
-      threadsByProject[project.id] = threads.map(threadToSummary);
-    }
-
-    return {
-      projects: projects.map(projectToSummary),
-      threadsByProject,
-      activeThreadId: getInitialActiveThreadId(
-        db,
-        projects.map((project) => project.id)
-      ),
-    };
+    return buildWorkspaceSnapshot(db);
   }, {
     fallbackCode: "WORKSPACE_LOAD_FAILED",
     fallbackMessage: "Workspace data is currently unavailable.",
+  });
+}
+
+export function createProject(
+  db: Database,
+  name: string
+): IpcResult<WorkspaceSnapshot> {
+  const trimmedName = name.trim();
+  if (trimmedName === "") {
+    return {
+      success: false,
+      error: {
+        code: "PROJECT_NAME_REQUIRED",
+        message: "Project name is required.",
+        recoverable: true,
+      },
+    };
+  }
+
+  return withIpcError(() => {
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: crypto.randomUUID(),
+      name: trimmedName,
+      sortOrder: getNextProjectSortOrder(db),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    insertProject(db, project);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_CREATE_FAILED",
+    fallbackMessage: "The project could not be created.",
+  });
+}
+
+export function removeProject(
+  db: Database,
+  projectId: string
+): IpcResult<WorkspaceSnapshot> {
+  if (!projectId || projectId.trim() === "") {
+    return {
+      success: false,
+      error: {
+        code: "PROJECT_ID_REQUIRED",
+        message: "Project ID is required.",
+        recoverable: true,
+      },
+    };
+  }
+
+  const existingProject = getProjectById(db, projectId);
+  if (!existingProject) {
+    return {
+      success: false,
+      error: {
+        code: "PROJECT_NOT_FOUND",
+        message: "Project not found.",
+        recoverable: true,
+      },
+    };
+  }
+
+  return withIpcError(() => {
+    deleteProject(db, projectId);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_DELETE_FAILED",
+    fallbackMessage: "The project could not be deleted.",
   });
 }
 

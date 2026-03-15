@@ -38,6 +38,14 @@ export interface ActiveThreadDetail {
   messages: MessageView[];
 }
 
+export interface ProjectCreateRequest {
+  name: string;
+}
+
+export interface ProjectDeleteRequest {
+  projectId: string;
+}
+
 export interface IpcError {
   code: string;
   message: string;
@@ -51,6 +59,8 @@ export type IpcResult<T> =
 /** IPC channel names */
 export const IPC_CHANNELS = {
   WORKSPACE_LOAD: "workspace:load",
+  PROJECT_CREATE: "project:create",
+  PROJECT_DELETE: "project:delete",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
 } as const;

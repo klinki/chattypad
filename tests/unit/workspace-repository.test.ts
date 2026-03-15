@@ -7,7 +7,9 @@ import type { Database } from "bun:sqlite";
 import { createTestDatabase } from "../../src/main/database/sqlite.js";
 import { initializeSchema } from "../../src/main/database/schema.js";
 import {
+  deleteProject,
   getAllProjects,
+  getNextProjectSortOrder,
   getProjectById,
   insertProject,
   getAllThreadsByProject,
@@ -103,6 +105,24 @@ describe("Project repository", () => {
     const project = makeProject({ id: "p1", name: "My Project", sortOrder: 5 });
     const summary = projectToSummary(project);
     expect(summary).toEqual({ id: "p1", name: "My Project", sortOrder: 5 });
+  });
+
+  test("getNextProjectSortOrder returns the next available sort order", () => {
+    insertProject(db, makeProject({ id: "proj-a", sortOrder: 1 }));
+    insertProject(db, makeProject({ id: "proj-b", sortOrder: 4 }));
+    expect(getNextProjectSortOrder(db)).toBe(5);
+  });
+
+  test("deleteProject removes the project and cascades related rows", () => {
+    insertProject(db, makeProject());
+    insertThread(db, makeThread());
+    insertMessage(db, makeMessage());
+
+    deleteProject(db, "proj-test");
+
+    expect(getProjectById(db, "proj-test")).toBeNull();
+    expect(getThreadById(db, "thread-test")).toBeNull();
+    expect(getMessagesByThread(db, "thread-test")).toHaveLength(0);
   });
 });
 

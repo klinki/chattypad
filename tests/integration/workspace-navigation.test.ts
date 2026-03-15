@@ -70,6 +70,47 @@ describe("workspace:load handler (US1)", () => {
   });
 });
 
+describe("project handlers", () => {
+  test("project:create adds a new project at the end of the sidebar order", () => {
+    const handlers = createWorkspaceHandlers(db);
+    const result = handlers.handleProjectCreate("New Project");
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.projects.at(-1)?.name).toBe("New Project");
+    expect(result.data.threadsByProject[result.data.projects.at(-1)?.id ?? ""]).toEqual([]);
+  });
+
+  test("project:delete removes the project and its threads from the workspace snapshot", () => {
+    const handlers = createWorkspaceHandlers(db);
+    const result = handlers.handleProjectDelete("proj-001");
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    expect(result.data.projects.some((project) => project.id === "proj-001")).toBe(false);
+    expect(result.data.threadsByProject["proj-001"]).toBeUndefined();
+  });
+
+  test("project:delete returns a recoverable error for unknown projects", () => {
+    const handlers = createWorkspaceHandlers(db);
+    const result = handlers.handleProjectDelete("proj-missing");
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.error.code).toBe("PROJECT_NOT_FOUND");
+    expect(result.error.recoverable).toBe(true);
+  });
+});
+
 describe("thread:open handler (US1/US2)", () => {
   test("returns ActiveThreadDetail for a valid thread ID", () => {
     const handlers = createWorkspaceHandlers(db);

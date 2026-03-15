@@ -1,6 +1,8 @@
 import type {
   ActiveThreadDetail,
   IpcResult,
+  ProjectCreateRequest,
+  ProjectDeleteRequest,
   WorkspaceSnapshot,
 } from "./workspace.js";
 import { IPC_CHANNELS } from "./workspace.js";
@@ -9,19 +11,27 @@ export interface ThreadOpenRequest {
   threadId: string;
 }
 
+type EmptyRpcSection = Record<never, never>;
+
 export interface MessageSendRequest {
   threadId: string;
   content: string;
   role: string;
 }
 
-type EmptyRpcSection = Record<never, never>;
-
 export interface WorkspaceElectrobunRpcSchema {
   bun: {
     requests: {
       [IPC_CHANNELS.WORKSPACE_LOAD]: {
         params: undefined;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_CREATE]: {
+        params: ProjectCreateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_DELETE]: {
+        params: ProjectDeleteRequest;
         response: IpcResult<WorkspaceSnapshot>;
       };
       [IPC_CHANNELS.THREAD_OPEN]: {

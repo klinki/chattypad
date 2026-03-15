@@ -98,6 +98,19 @@ export function insertProject(db: Database, project: Project): void {
   );
 }
 
+export function deleteProject(db: Database, projectId: string): void {
+  db.run("DELETE FROM projects WHERE id = ?", [projectId]);
+}
+
+export function getNextProjectSortOrder(db: Database): number {
+  const result = db
+    .query<{ max_sort_order: number | null }, []>(
+      "SELECT MAX(sort_order) AS max_sort_order FROM projects"
+    )
+    .get();
+  return (result?.max_sort_order ?? -1) + 1;
+}
+
 // ─── Thread repository ─────────────────────────────────────────────────────────
 
 export function getAllThreadsByProject(db: Database, projectId: string): ChatThread[] {
