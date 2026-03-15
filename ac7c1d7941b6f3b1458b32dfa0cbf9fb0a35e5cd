@@ -1,0 +1,43 @@
+tests/unit/workspace-repository.test.ts
+  750abd0fc2a57066 16,156-161
+src/main/app/workspace-service.ts
+  750abd0fc2a57066 10,16,21,41-47,60-62,152,154-156,160-161,167-168,170-188,190-192,194-195,198
+src/shared/contracts/workspace.ts
+  750abd0fc2a57066 49,68
+src/shared/contracts/electrobun-rpc.ts
+  750abd0fc2a57066 6,38-41
+src/renderer/features/workspace/workspace-screen.tsx
+  750abd0fc2a57066 62-63,99
+src/renderer/ipc/workspace-client.ts
+  750abd0fc2a57066 14,27,130-131
+src/main/ipc/workspace-ipc.ts
+  750abd0fc2a57066 10,17,29,43,60-61,80,109-116,166-169,171
+src/renderer/features/workspace/workspace-controller.ts
+  750abd0fc2a57066 73-75,77-78,80-82,106
+src/renderer/components/sidebar.tsx
+  750abd0fc2a57066 18,29,91,107,117,146-157,163,166-167,226-239
+src/main/database/workspace-repository.ts
+  750abd0fc2a57066 148,150-151,153-154
+tests/integration/workspace-navigation.test.ts
+  750abd0fc2a57066 114-115,117,124-125,127-129,132,134-135,141-142,145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "ac7c1d7941b6f3b1458b32dfa0cbf9fb0a35e5cd",
+  "prompts": {
+    "750abd0fc2a57066": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ced75-f266-7281-9460-9520f1cf571c",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 1070,
+      "total_deletions": 874,
+      "accepted_lines": 393,
+      "overriden_lines": 0
+    }
+  }
+}
