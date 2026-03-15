@@ -11,6 +11,7 @@ import type {
   IpcChannel,
   ProjectCreateRequest,
   ProjectDeleteRequest,
+  ThreadCreateRequest,
 } from "../../shared/contracts/workspace.js";
 import { IPC_CHANNELS } from "../../shared/contracts/workspace.js";
 import type {
@@ -23,6 +24,7 @@ export interface WorkspaceIpcClient {
   loadWorkspace(): Promise<IpcResult<WorkspaceSnapshot>>;
   createProject(name: string): Promise<IpcResult<WorkspaceSnapshot>>;
   deleteProject(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  createThread(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
   openThread(threadId: string): Promise<IpcResult<ActiveThreadDetail>>;
   sendMessage(
     threadId: string,
@@ -125,6 +127,8 @@ export const workspaceIpcClient: WorkspaceIpcClient = {
     invokeIpc(IPC_CHANNELS.PROJECT_CREATE, { name }),
   deleteProject: (projectId: ProjectDeleteRequest["projectId"]) =>
     invokeIpc(IPC_CHANNELS.PROJECT_DELETE, { projectId }),
+  createThread: (projectId: ThreadCreateRequest["projectId"]) =>
+    invokeIpc(IPC_CHANNELS.THREAD_CREATE, { projectId }),
   openThread: (threadId: ThreadOpenRequest["threadId"]) =>
     invokeIpc(IPC_CHANNELS.THREAD_OPEN, { threadId }),
   sendMessage: (threadId, content, role) =>

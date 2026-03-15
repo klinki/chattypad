@@ -7,16 +7,18 @@ import {
   deleteProject,
   getAllProjects,
   getAllThreadsByProject,
+  getNextThreadSortOrder,
   getProjectById,
   getNextProjectSortOrder,
   getThreadById,
   getMessagesByThread,
   insertProject,
+  insertThread,
   projectToSummary,
   threadToSummary,
   messageToView,
 } from "../database/workspace-repository.js";
-import type { Project } from "../../shared/models/workspace.js";
+import type { ChatThread, Project } from "../../shared/models/workspace.js";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -36,6 +38,13 @@ function getInitialActiveThreadId(db: Database, projectIds: string[]): string | 
 }
 
 function buildWorkspaceSnapshot(db: Database): WorkspaceSnapshot {
+  return buildWorkspaceSnapshotWithActiveThread(db);
+}
+
+function buildWorkspaceSnapshotWithActiveThread(
+  db: Database,
+  activeThreadId?: string | null
+): WorkspaceSnapshot {
   const projects = getAllProjects(db);
   const threadsByProject: Record<string, ReturnType<typeof threadToSummary>[]> = {};
 
@@ -47,10 +56,13 @@ function buildWorkspaceSnapshot(db: Database): WorkspaceSnapshot {
   return {
     projects: projects.map(projectToSummary),
     threadsByProject,
-    activeThreadId: getInitialActiveThreadId(
-      db,
-      projects.map((project) => project.id)
-    ),
+    activeThreadId:
+      activeThreadId !== undefined
+        ? activeThreadId
+        : getInitialActiveThreadId(
+            db,
+            projects.map((project) => project.id)
+          ),
   };
 }
 
@@ -134,6 +146,53 @@ export function removeProject(
   }, {
     fallbackCode: "PROJECT_DELETE_FAILED",
     fallbackMessage: "The project could not be deleted.",
+  });
+}
+
+export function createThread(
+  db: Database,
+  projectId: string
+): IpcResult<WorkspaceSnapshot> {
+  if (!projectId || projectId.trim() === "") {
+    return {
+      success: false,
+      error: {
+        code: "PROJECT_ID_REQUIRED",
+        message: "Project ID is required.",
+        recoverable: true,
+      },
+    };
+  }
+
+  const existingProject = getProjectById(db, projectId);
+  if (!existingProject) {
+    return {
+      success: false,
+      error: {
+        code: "PROJECT_NOT_FOUND",
+        message: "Project not found.",
+        recoverable: true,
+      },
+    };
+  }
+
+  return withIpcError(() => {
+    const now = new Date().toISOString();
+    const thread: ChatThread = {
+      id: crypto.randomUUID(),
+      projectId,
+      title: "New thread",
+      sortOrder: getNextThreadSortOrder(db, projectId),
+      createdAt: now,
+      updatedAt: now,
+      lastMessageAt: null,
+    };
+
+    insertThread(db, thread);
+    return buildWorkspaceSnapshotWithActiveThread(db, thread.id);
+  }, {
+    fallbackCode: "THREAD_CREATE_FAILED",
+    fallbackMessage: "The thread could not be created.",
   });
 }
 

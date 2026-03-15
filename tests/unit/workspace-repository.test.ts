@@ -13,6 +13,7 @@ import {
   getProjectById,
   insertProject,
   getAllThreadsByProject,
+  getNextThreadSortOrder,
   getThreadById,
   insertThread,
   updateThreadTimestamps,
@@ -150,6 +151,12 @@ describe("Thread repository", () => {
     insertThread(db, makeThread({ id: "t-c", title: "C", sortOrder: 1 }));
     const result = getAllThreadsByProject(db, "proj-test");
     expect(result.map((t) => t.title)).toEqual(["A", "C", "B"]);
+  });
+
+  test("getNextThreadSortOrder returns the next available sort order for a project", () => {
+    insertThread(db, makeThread({ id: "t-a", sortOrder: 1 }));
+    insertThread(db, makeThread({ id: "t-b", sortOrder: 4 }));
+    expect(getNextThreadSortOrder(db, "proj-test")).toBe(5);
   });
 
   test("getThreadById returns null for non-existent id", () => {

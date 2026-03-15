@@ -59,6 +59,10 @@ export function WorkspaceScreen(): React.ReactElement {
     setProjectDialog({ mode: "delete", project });
   }, []);
 
+  const handleCreateThread = useCallback((project: ProjectSummary) => {
+    controller.createThread(project.id);
+  }, []);
+
   const closeProjectDialog = useCallback(() => {
     if (!state.isLoading) {
       setProjectDialog({ mode: "closed" });
@@ -92,6 +96,7 @@ export function WorkspaceScreen(): React.ReactElement {
       isBusy={state.isLoading}
       onSelectThread={handleSelectThread}
       onCreateProject={handleCreateProject}
+      onCreateThread={handleCreateThread}
       onDeleteProject={handleDeleteProject}
     />
   );

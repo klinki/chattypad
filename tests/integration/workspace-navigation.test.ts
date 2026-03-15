@@ -111,6 +111,38 @@ describe("project handlers", () => {
   });
 });
 
+describe("thread:create handler", () => {
+  test("adds a new empty thread to the requested project and makes it active", () => {
+    const handlers = createWorkspaceHandlers(db);
+    const result = handlers.handleThreadCreate("proj-002");
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+
+    const createdThreadId = result.data.activeThreadId;
+    expect(createdThreadId).toBeTruthy();
+
+    const projectThreads = result.data.threadsByProject["proj-002"] ?? [];
+    expect(projectThreads.at(-1)?.title).toBe("New thread");
+    expect(projectThreads.some((thread) => thread.id === createdThreadId)).toBe(true);
+  });
+
+  test("returns a recoverable error for an unknown project", () => {
+    const handlers = createWorkspaceHandlers(db);
+    const result = handlers.handleThreadCreate("proj-missing");
+
+    expect(result.success).toBe(false);
+    if (result.success) {
+      return;
+    }
+
+    expect(result.error.code).toBe("PROJECT_NOT_FOUND");
+    expect(result.error.recoverable).toBe(true);
+  });
+});
+
 describe("thread:open handler (US1/US2)", () => {
   test("returns ActiveThreadDetail for a valid thread ID", () => {
     const handlers = createWorkspaceHandlers(db);

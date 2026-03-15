@@ -46,6 +46,10 @@ export interface ProjectDeleteRequest {
   projectId: string;
 }
 
+export interface ThreadCreateRequest {
+  projectId: string;
+}
+
 export interface IpcError {
   code: string;
   message: string;
@@ -61,6 +65,7 @@ export const IPC_CHANNELS = {
   WORKSPACE_LOAD: "workspace:load",
   PROJECT_CREATE: "project:create",
   PROJECT_DELETE: "project:delete",
+  THREAD_CREATE: "thread:create",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
 } as const;

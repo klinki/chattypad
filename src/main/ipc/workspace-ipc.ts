@@ -7,12 +7,14 @@
  *   workspace:load  → loadWorkspace
  *   project:create  → createProject
  *   project:delete  → removeProject
+ *   thread:create   → createThread
  *   thread:open     → openThread
  *   message:send    → sendMessage (wired in Phase 5 via message-service)
  */
 import type { Database } from "bun:sqlite";
 import {
   createProject,
+  createThread,
   loadWorkspace,
   openThread,
   removeProject,
@@ -24,6 +26,7 @@ import type {
   IpcResult,
   ProjectCreateRequest,
   ProjectDeleteRequest,
+  ThreadCreateRequest,
 } from "../../shared/contracts/workspace.js";
 import { IPC_CHANNELS as CHANNELS } from "../../shared/contracts/workspace.js";
 import type {
@@ -37,6 +40,7 @@ export interface WorkspaceHandlers {
   handleWorkspaceLoad: () => IpcResult<WorkspaceSnapshot>;
   handleProjectCreate: (name: string) => IpcResult<WorkspaceSnapshot>;
   handleProjectDelete: (projectId: string) => IpcResult<WorkspaceSnapshot>;
+  handleThreadCreate: (projectId: string) => IpcResult<WorkspaceSnapshot>;
   handleThreadOpen: (threadId: string) => IpcResult<ActiveThreadDetail>;
   handleMessageSend: (
     threadId: string,
@@ -52,6 +56,9 @@ export interface WorkspaceRpcRequestHandlers {
   ) => IpcResult<WorkspaceSnapshot>;
   [CHANNELS.PROJECT_DELETE]: (
     payload?: ProjectDeleteRequest
+  ) => IpcResult<WorkspaceSnapshot>;
+  [CHANNELS.THREAD_CREATE]: (
+    payload?: ThreadCreateRequest
   ) => IpcResult<WorkspaceSnapshot>;
   [CHANNELS.THREAD_OPEN]: (
     payload?: ThreadOpenRequest
@@ -70,6 +77,7 @@ export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
     handleWorkspaceLoad: () => loadWorkspace(db),
     handleProjectCreate: (name: string) => createProject(db, name),
     handleProjectDelete: (projectId: string) => removeProject(db, projectId),
+    handleThreadCreate: (projectId: string) => createThread(db, projectId),
     handleThreadOpen: (threadId: string) => openThread(db, threadId),
     handleMessageSend: (threadId: string, content: string, role: string) =>
       sendMessage(db, { threadId, content, role }),
@@ -95,6 +103,14 @@ function normalizeProjectDeleteRequest(
 function normalizeThreadOpenRequest(payload?: ThreadOpenRequest): ThreadOpenRequest {
   return {
     threadId: typeof payload?.threadId === "string" ? payload.threadId : "",
+  };
+}
+
+function normalizeThreadCreateRequest(
+  payload?: ThreadCreateRequest
+): ThreadCreateRequest {
+  return {
+    projectId: typeof payload?.projectId === "string" ? payload.projectId : "",
   };
 }
 
@@ -143,6 +159,16 @@ export function createWorkspaceRpcRequestHandlers(
       const result = handlers.handleProjectDelete(request.projectId);
       logRequest(
         CHANNELS.PROJECT_DELETE,
+        result.success ? "success" : `error ${result.error.code}`
+      );
+      return result;
+    },
+    [CHANNELS.THREAD_CREATE]: (payload) => {
+      const request = normalizeThreadCreateRequest(payload);
+      logRequest(CHANNELS.THREAD_CREATE, `request projectId=${request.projectId}`);
+      const result = handlers.handleThreadCreate(request.projectId);
+      logRequest(
+        CHANNELS.THREAD_CREATE,
         result.success ? "success" : `error ${result.error.code}`
       );
       return result;

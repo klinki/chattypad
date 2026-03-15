@@ -145,6 +145,15 @@ export function insertThread(db: Database, thread: ChatThread): void {
   );
 }
 
+export function getNextThreadSortOrder(db: Database, projectId: string): number {
+  const result = db
+    .query<{ max_sort_order: number | null }, [string]>(
+      "SELECT MAX(sort_order) AS max_sort_order FROM chat_threads WHERE project_id = ?"
+    )
+    .get(projectId);
+  return (result?.max_sort_order ?? -1) + 1;
+}
+
 export function updateThreadTimestamps(
   db: Database,
   threadId: string,

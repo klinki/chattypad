@@ -3,6 +3,7 @@ import type {
   IpcResult,
   ProjectCreateRequest,
   ProjectDeleteRequest,
+  ThreadCreateRequest,
   WorkspaceSnapshot,
 } from "./workspace.js";
 import { IPC_CHANNELS } from "./workspace.js";
@@ -32,6 +33,10 @@ export interface WorkspaceElectrobunRpcSchema {
       };
       [IPC_CHANNELS.PROJECT_DELETE]: {
         params: ProjectDeleteRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.THREAD_CREATE]: {
+        params: ThreadCreateRequest;
         response: IpcResult<WorkspaceSnapshot>;
       };
       [IPC_CHANNELS.THREAD_OPEN]: {

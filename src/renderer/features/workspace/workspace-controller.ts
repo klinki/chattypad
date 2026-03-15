@@ -70,6 +70,18 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return false;
   }
 
+  async function createThread(projectId: string): Promise<boolean> {
+    workspaceStore.setLoading(true);
+    const result = await client.createThread(projectId);
+    if (result.success) {
+      await applySnapshot(result.data);
+      return true;
+    }
+
+    workspaceStore.setError(result.error);
+    return false;
+  }
+
   async function sendMessage(threadId: string, content: string): Promise<void> {
     const requestId = ++latestSendRequestId;
     const targetThreadId = threadId;
@@ -91,6 +103,7 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     loadWorkspace,
     createProject,
     deleteProject,
+    createThread,
     openThread,
     sendMessage,
   };

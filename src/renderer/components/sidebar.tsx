@@ -15,6 +15,7 @@ interface SidebarProps {
   isBusy: boolean;
   onSelectThread: (threadId: string) => void;
   onCreateProject: () => void;
+  onCreateThread: (project: ProjectSummary) => void;
   onDeleteProject: (project: ProjectSummary) => void;
 }
 
@@ -25,6 +26,7 @@ export function Sidebar({
   isBusy,
   onSelectThread,
   onCreateProject,
+  onCreateThread,
   onDeleteProject,
 }: SidebarProps): React.ReactElement {
   return (
@@ -86,6 +88,7 @@ export function Sidebar({
               activeThreadId={activeThreadId}
               isBusy={isBusy}
               onSelectThread={onSelectThread}
+              onCreateThread={onCreateThread}
               onDeleteProject={onDeleteProject}
             />
           );
@@ -101,6 +104,7 @@ interface ProjectGroupProps {
   activeThreadId: string | null;
   isBusy: boolean;
   onSelectThread: (threadId: string) => void;
+  onCreateThread: (project: ProjectSummary) => void;
   onDeleteProject: (project: ProjectSummary) => void;
 }
 
@@ -110,6 +114,7 @@ function ProjectGroup({
   activeThreadId,
   isBusy,
   onSelectThread,
+  onCreateThread,
   onDeleteProject,
 }: ProjectGroupProps): React.ReactElement {
   return (
@@ -138,16 +143,28 @@ function ProjectGroup({
         >
           {project.name}
         </div>
-        <button
-          type="button"
-          onClick={() => onDeleteProject(project)}
-          disabled={isBusy}
-          aria-label={`Delete ${project.name}`}
-          title={`Delete ${project.name}`}
-          style={iconButtonStyle}
-        >
-          Delete
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => onCreateThread(project)}
+            disabled={isBusy}
+            aria-label={`Create thread in ${project.name}`}
+            title={`Create thread in ${project.name}`}
+            style={iconButtonStyle}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeleteProject(project)}
+            disabled={isBusy}
+            aria-label={`Delete ${project.name}`}
+            title={`Delete ${project.name}`}
+            style={deleteButtonStyle}
+          >
+            Delete
+          </button>
+        </div>
       </div>
       {threads.length === 0 ? (
         <div
@@ -206,6 +223,20 @@ const actionButtonStyle: React.CSSProperties = {
 };
 
 const iconButtonStyle: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: 8,
+  border: "1px solid #45475a",
+  background: "transparent",
+  color: "#89b4fa",
+  fontSize: 18,
+  fontWeight: 600,
+  cursor: "pointer",
+  flexShrink: 0,
+  lineHeight: 1,
+};
+
+const deleteButtonStyle: React.CSSProperties = {
   padding: "4px 8px",
   borderRadius: 8,
   border: "1px solid #45475a",
