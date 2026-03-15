@@ -1,0 +1,31 @@
+src/renderer/index.html
+  750abd0fc2a57066 10-14,16-18,20-25
+src/renderer/components/message-composer.tsx
+  750abd0fc2a57066 58,61-62,69,88-90,106,108,111
+src/renderer/components/workspace-shell.tsx
+  750abd0fc2a57066 64,67,89,92,110,134,141,147,159
+src/renderer/components/thread-header.tsx
+  750abd0fc2a57066 26,29
+src/renderer/components/message-history.tsx
+  750abd0fc2a57066 28,77,79,91-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "d88ea699f76a9c0a016fc7b2fa2d69736f530b82",
+  "prompts": {
+    "750abd0fc2a57066": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ced75-f266-7281-9460-9520f1cf571c",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    }
+  }
+}
