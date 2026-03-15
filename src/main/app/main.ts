@@ -157,6 +157,8 @@ async function bootstrap(): Promise<void> {
 
   let mainWindow: any;
 
+  let isMaximized = false;
+
   logStartup("Defining Electrobun RPC bridge");
   const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
     "bun",
@@ -170,11 +172,16 @@ async function bootstrap(): Promise<void> {
             if (mainWindow?.minimize) mainWindow.minimize();
           },
           [CHANNELS.WINDOW_MAXIMIZE]: () => {
-            logStartup("Maximizing window");
-            // @ts-ignore
-            if (mainWindow?.maximize) mainWindow.maximize();
-            // @ts-ignore
-            else if (mainWindow?.isMaximized && mainWindow.isMaximized()) mainWindow.unmaximize();
+            logStartup(`Maximizing window (currently ${isMaximized})`);
+            if (isMaximized) {
+              // @ts-ignore
+              if (mainWindow?.unmaximize) mainWindow.unmaximize();
+              isMaximized = false;
+            } else {
+              // @ts-ignore
+              if (mainWindow?.maximize) mainWindow.maximize();
+              isMaximized = true;
+            }
           },
           [CHANNELS.WINDOW_CLOSE]: () => {
             logStartup("Closing window");
@@ -205,6 +212,14 @@ async function bootstrap(): Promise<void> {
       height: 800,
     },
     titleBarStyle: "hidden",
+    // @ts-ignore: inject styleMask to force resizable frameless window if supported
+    styleMask: {
+      Borderless: true,
+      Resizable: true,
+      Titled: true,
+      Closable: true,
+      Miniaturizable: true,
+    },
     transparent: false,
     navigationRules: null,
     sandbox: false,
