@@ -216,7 +216,7 @@ async function bootstrap(): Promise<void> {
     styleMask: {
       Borderless: true,
       Resizable: true,
-      Titled: true,
+      Titled: false,
       Closable: true,
       Miniaturizable: true,
     },
