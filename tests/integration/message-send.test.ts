@@ -16,17 +16,14 @@ function createPopulatedDb(): Database {
   initializeSchema(populatedDb);
   insertProject(populatedDb, {
     id: "p1",
-    name: "Persistence Test",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    name: "Persistence Test", sortOrder: 0, groupId: null, isCollapsed: false, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   });
   insertThread(populatedDb, {
     id: "t1",
     projectId: "p1",
     title: "Persist Thread",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    sortOrder: 0, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
     lastMessageAt: null,
   });

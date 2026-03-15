@@ -3,7 +3,14 @@ import type {
   IpcResult,
   ProjectCreateRequest,
   ProjectDeleteRequest,
+  ProjectUpdateRequest,
+  ProjectGroupCreateRequest,
+  ProjectGroupDeleteRequest,
+  ProjectGroupUpdateRequest,
+  ProjectMoveToGroupRequest,
+  ReorderRequest,
   ThreadCreateRequest,
+  ThreadUpdateRequest,
   WorkspaceSnapshot,
 } from "./workspace.js";
 import { IPC_CHANNELS } from "./workspace.js";
@@ -31,12 +38,44 @@ export interface WorkspaceElectrobunRpcSchema {
         params: ProjectCreateRequest;
         response: IpcResult<WorkspaceSnapshot>;
       };
+      [IPC_CHANNELS.PROJECT_UPDATE]: {
+        params: ProjectUpdateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
       [IPC_CHANNELS.PROJECT_DELETE]: {
         params: ProjectDeleteRequest;
         response: IpcResult<WorkspaceSnapshot>;
       };
+      [IPC_CHANNELS.PROJECT_GROUP_CREATE]: {
+        params: ProjectGroupCreateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_GROUP_UPDATE]: {
+        params: ProjectGroupUpdateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_GROUP_DELETE]: {
+        params: ProjectGroupDeleteRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_MOVE_TO_GROUP]: {
+        params: ProjectMoveToGroupRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.PROJECT_REORDER]: {
+        params: ReorderRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
       [IPC_CHANNELS.THREAD_CREATE]: {
         params: ThreadCreateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.THREAD_UPDATE]: {
+        params: ThreadUpdateRequest;
+        response: IpcResult<WorkspaceSnapshot>;
+      };
+      [IPC_CHANNELS.THREAD_REORDER]: {
+        params: ReorderRequest;
         response: IpcResult<WorkspaceSnapshot>;
       };
       [IPC_CHANNELS.THREAD_OPEN]: {
@@ -48,7 +87,11 @@ export interface WorkspaceElectrobunRpcSchema {
         response: IpcResult<ActiveThreadDetail>;
       };
     };
-    messages: EmptyRpcSection;
+    messages: {
+      [IPC_CHANNELS.WINDOW_MINIMIZE]: undefined;
+      [IPC_CHANNELS.WINDOW_MAXIMIZE]: undefined;
+      [IPC_CHANNELS.WINDOW_CLOSE]: undefined;
+    };
   };
   webview: {
     requests: EmptyRpcSection;

@@ -17,8 +17,18 @@ import {
   projectToSummary,
   threadToSummary,
   messageToView,
+  getAllProjectGroups,
+  projectGroupToSummary,
+  insertProjectGroup,
+  getNextProjectGroupSortOrder,
+  deleteProjectGroup,
+  updateProjectGroup,
+  updateProject as updateProjectRepo,
+  updateProjectSortOrder,
+  updateThreadSortOrder,
+  updateThreadTitle,
 } from "../database/workspace-repository.js";
-import type { ChatThread, Project } from "../../shared/models/workspace.js";
+import type { ChatThread, Project, ProjectGroup } from "../../shared/models/workspace.js";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -45,6 +55,7 @@ function buildWorkspaceSnapshotWithActiveThread(
   db: Database,
   activeThreadId?: string | null
 ): WorkspaceSnapshot {
+  const projectGroups = getAllProjectGroups(db);
   const projects = getAllProjects(db);
   const threadsByProject: Record<string, ReturnType<typeof threadToSummary>[]> = {};
 
@@ -54,6 +65,7 @@ function buildWorkspaceSnapshotWithActiveThread(
   }
 
   return {
+    projectGroups: projectGroups.map(projectGroupToSummary),
     projects: projects.map(projectToSummary),
     threadsByProject,
     activeThreadId:
@@ -101,6 +113,8 @@ export function createProject(
       id: crypto.randomUUID(),
       name: trimmedName,
       sortOrder: getNextProjectSortOrder(db),
+      groupId: null,
+      isCollapsed: false,
       createdAt: now,
       updatedAt: now,
     };
@@ -229,5 +243,122 @@ export function openThread(
   }, {
     fallbackCode: "THREAD_OPEN_FAILED",
     fallbackMessage: "Workspace data is currently unavailable.",
+  });
+}
+
+export function updateProject(
+  db: Database,
+  projectId: string,
+  updates: { name?: string; isCollapsed?: boolean }
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateProjectRepo(db, projectId, updates);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_UPDATE_FAILED",
+    fallbackMessage: "The project could not be updated.",
+  });
+}
+
+export function createProjectGroup(
+  db: Database,
+  name: string
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    const group: ProjectGroup = {
+      id: crypto.randomUUID(),
+      name,
+      sortOrder: getNextProjectGroupSortOrder(db),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    insertProjectGroup(db, group);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_GROUP_CREATE_FAILED",
+    fallbackMessage: "The project group could not be created.",
+  });
+}
+
+export function removeProjectGroup(
+  db: Database,
+  groupId: string
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    deleteProjectGroup(db, groupId);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_GROUP_DELETE_FAILED",
+    fallbackMessage: "The project group could not be deleted.",
+  });
+}
+
+export function renameProjectGroup(
+  db: Database,
+  groupId: string,
+  name: string
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateProjectGroup(db, groupId, name);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_GROUP_UPDATE_FAILED",
+    fallbackMessage: "The project group could not be updated.",
+  });
+}
+
+export function moveProjectToGroup(
+  db: Database,
+  projectId: string,
+  groupId: string | null
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateProjectRepo(db, projectId, { groupId });
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_MOVE_FAILED",
+    fallbackMessage: "The project could not be moved.",
+  });
+}
+
+export function reorderProject(
+  db: Database,
+  projectId: string,
+  targetSortOrder: number
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateProjectSortOrder(db, projectId, targetSortOrder);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "PROJECT_REORDER_FAILED",
+    fallbackMessage: "The project could not be reordered.",
+  });
+}
+
+export function reorderThread(
+  db: Database,
+  threadId: string,
+  targetSortOrder: number
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateThreadSortOrder(db, threadId, targetSortOrder);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "THREAD_REORDER_FAILED",
+    fallbackMessage: "The thread could not be reordered.",
+  });
+}
+
+export function updateThread(
+  db: Database,
+  threadId: string,
+  title: string
+): IpcResult<WorkspaceSnapshot> {
+  return withIpcError(() => {
+    updateThreadTitle(db, threadId, title);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "THREAD_UPDATE_FAILED",
+    fallbackMessage: "The thread could not be updated.",
   });
 }

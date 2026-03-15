@@ -19,9 +19,9 @@
 
 **Purpose**: Project initialization and shared dependencies
 
-- [ ] T001 Install `@dnd-kit/core` and `@dnd-kit/sortable` dependencies using `bun add`
-- [ ] T002 [P] Update `src/shared/contracts/workspace.ts` with new IPC channel constants and updated snapshot interfaces
-- [ ] T003 [P] Update `src/shared/contracts/electrobun-rpc.ts` to include new RPC request and message schemas
+- [x] T001 Install `@dnd-kit/core` and `@dnd-kit/sortable` dependencies using `bun add`
+- [x] T002 [P] Update `src/shared/contracts/workspace.ts` with new IPC channel constants and updated snapshot interfaces
+- [x] T003 [P] Update `src/shared/contracts/electrobun-rpc.ts` to include new RPC request and message schemas
 
 ---
 
@@ -29,10 +29,10 @@
 
 **Purpose**: Database schema updates and core IPC handlers that block all user stories
 
-- [ ] T004 Update `src/main/database/schema.ts` to add `project_groups` table and new columns (`is_collapsed`, `group_id`) to `projects` table
-- [ ] T005 [P] Update `src/main/database/workspace-repository.ts` with methods for `ProjectGroups` CRUD and `is_collapsed` updates
-- [ ] T006 [P] Update `src/main/ipc/workspace-ipc.ts` to register handlers for new IPC channels defined in contracts
-- [ ] T007 Update `src/renderer/state/workspace-store.ts` (or equivalent) to support `projectGroups` and new project fields
+- [x] T004 Update `src/main/database/schema.ts` to add `project_groups` table and new columns (`is_collapsed`, `group_id`) to `projects` table
+- [x] T005 [P] Update `src/main/database/workspace-repository.ts` with methods for `ProjectGroups` CRUD and `is_collapsed` updates
+- [x] T006 [P] Update `src/main/ipc/workspace-ipc.ts` to register handlers for new IPC channels defined in contracts
+- [x] T007 Update `src/renderer/state/workspace-store.ts` (or equivalent) to support `projectGroups` and new project fields
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -46,11 +46,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 Update `src/main/app/main.ts` to set `titleBarStyle: "hidden"` in `BrowserWindow` options
-- [ ] T009 [P] [US1] Create `Header` component with draggable region and window controls in `src/renderer/components/header.tsx`
-- [ ] T010 [US1] Implement window management IPC listeners in `src/main/app/main.ts` (minimize, maximize, close)
-- [ ] T011 [US1] Integrate `Header` into the main layout in `src/renderer/features/workspace/workspace-screen.tsx`
-- [ ] T012 [US1] [P] Apply `-webkit-app-region: drag` and `no-drag` styles in `src/renderer/index.html` or CSS
+- [x] T008 Update `src/main/app/main.ts` to set `titleBarStyle: "hidden"` in `BrowserWindow` options
+- [x] T009 [P] [US1] Create `Header` component with draggable region and window controls in `src/renderer/components/header.tsx`
+- [x] T010 [US1] Implement window management IPC listeners in `src/main/app/main.ts` (minimize, maximize, close)
+- [x] T011 [US1] Integrate `Header` into the main layout in `src/renderer/features/workspace/workspace-screen.tsx`
+- [x] T012 [US1] [P] Apply `-webkit-app-region: drag` and `no-drag` styles in `src/renderer/index.html` or CSS
 
 **Checkpoint**: User Story 1 functional and testable independently.
 
@@ -64,11 +64,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Rename `ProjectGroup` component to `ProjectItem` in `src/renderer/components/sidebar.tsx` for clarity
-- [ ] T014 [US2] Implement `isEditing` state and inline text input in `ProjectItem` component
-- [ ] T015 [US2] Add `useEffect` logic to `ProjectItem` for auto-focusing and selecting input text in edit mode
-- [ ] T016 [US2] Update `onCreateProject` in `src/renderer/features/workspace/workspace-controller.ts` to trigger edit mode for new items
-- [ ] T017 [US2] [P] Implement similar inline editing logic for Threads in `src/renderer/components/sidebar.tsx`
+- [x] T013 [US2] Rename `ProjectGroup` component to `ProjectItem` in `src/renderer/components/sidebar.tsx` for clarity
+- [x] T014 [US2] Implement `isEditing` state and inline text input in `ProjectItem` component
+- [x] T015 [US2] Add `useEffect` logic to `ProjectItem` for auto-focusing and selecting input text in edit mode
+- [x] T016 [US2] Update `onCreateProject` in `src/renderer/features/workspace/workspace-controller.ts` to trigger edit mode for new items
+- [x] T017 [US2] [P] Implement similar inline editing logic for Threads in `src/renderer/components/sidebar.tsx`
 
 **Checkpoint**: User Story 2 functional and testable independently.
 
@@ -82,12 +82,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement collapse/expand toggle and state persistence in `ProjectItem` and `workspace-store`
-- [ ] T019 [US3] Create `ProjectGroup` component for rendering grouped projects in `src/renderer/components/sidebar.tsx`
-- [ ] T020 [US3] Integrate `DndContext` and `SortableContext` from `@dnd-kit` into `Sidebar` component
-- [ ] T021 [US3] Implement `handleDragEnd` in `workspace-controller.ts` with boundary validation (prevent invalid drops) to trigger `project:reorder` and `thread:reorder` IPC calls
-- [ ] T022 [US3] Create custom `ContextMenu` component with support for dynamic nested submenus in `src/renderer/components/context-menu.tsx`
-- [ ] T023 [US3] Wire up context menu to `ProjectItem` and `ThreadItem` with "Rename", "Delete", and "Move to Group" actions
+- [x] T018 [US3] Implement collapse/expand toggle and state persistence in `ProjectItem` and `workspace-store`
+- [x] T019 [US3] Create `ProjectGroup` component for rendering grouped projects in `src/renderer/components/sidebar.tsx`
+- [x] T020 [US3] Integrate `DndContext` and `SortableContext` from `@dnd-kit` into `Sidebar` component
+- [x] T021 [US3] Implement `handleDragEnd` in `workspace-controller.ts` with boundary validation (prevent invalid drops) to trigger `project:reorder` and `thread:reorder` IPC calls
+- [x] T022 [US3] Create custom `ContextMenu` component with support for dynamic nested submenus in `src/renderer/components/context-menu.tsx`
+- [x] T023 [US3] Wire up context menu to `ProjectItem` and `ThreadItem` with "Rename", "Delete", and "Move to Group" actions
 
 **Checkpoint**: User Story 3 functional and testable independently.
 
@@ -97,10 +97,10 @@
 
 **Purpose**: Refinement and validation of all UI/UX enhancements.
 
-- [ ] T024 [P] Add hover effects and transitions to all sidebar items in `src/renderer/components/sidebar.tsx`
-- [ ] T025 [P] Implement nested submenu for "Move to Group" in the custom context menu
-- [ ] T026 Update `src/main/database/seed.ts` to include sample project groups and collapsed states
-- [ ] T027 Run `quickstart.md` validation to confirm all measurable outcomes (SC-001 to SC-004) are met
+- [x] T024 [P] Add hover effects and transitions to all sidebar items in `src/renderer/components/sidebar.tsx`
+- [x] T025 [P] Implement nested submenu for "Move to Group" in the custom context menu
+- [x] T026 Update `src/main/database/seed.ts` to include sample project groups and collapsed states
+- [x] T027 Run `quickstart.md` validation to confirm all measurable outcomes (SC-001 to SC-004) are met
 
 ---
 

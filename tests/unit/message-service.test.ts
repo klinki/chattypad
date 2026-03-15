@@ -20,17 +20,14 @@ beforeEach(() => {
   initializeSchema(db);
   insertProject(db, {
     id: "p1",
-    name: "Test Project",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    name: "Test Project", sortOrder: 0, groupId: null, isCollapsed: false, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   });
   insertThread(db, {
     id: "t1",
     projectId: "p1",
     title: "Test Thread",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    sortOrder: 0, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
     lastMessageAt: null,
   });

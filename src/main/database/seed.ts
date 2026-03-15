@@ -3,8 +3,8 @@
  * Provides pre-populated projects, threads, and messages for quickstart flows.
  */
 import type { Database } from "bun:sqlite";
-import { insertProject, insertThread, insertMessage } from "./workspace-repository.js";
-import type { Project, ChatThread, Message } from "../../shared/models/workspace.js";
+import { insertProject, insertThread, insertMessage, insertProjectGroup } from "./workspace-repository.js";
+import type { Project, ChatThread, Message, ProjectGroup } from "../../shared/models/workspace.js";
 
 function isoNow(offsetMs = 0): string {
   return new Date(Date.now() + offsetMs).toISOString();
@@ -15,10 +15,15 @@ export function seedDevelopmentData(db: Database): void {
   const existing = db.query<{ count: number }, []>("SELECT COUNT(*) AS count FROM projects").get();
   if ((existing?.count ?? 0) > 0) return;
 
+  const groups: ProjectGroup[] = [
+    { id: "grp-001", name: "Client Work", sortOrder: 0, createdAt: isoNow(-86400000 * 8), updatedAt: isoNow(-86400000 * 8) },
+    { id: "grp-002", name: "Internal", sortOrder: 1, createdAt: isoNow(-86400000 * 8), updatedAt: isoNow(-86400000 * 8) },
+  ];
+
   const projects: Project[] = [
-    { id: "proj-001", name: "Work Research", sortOrder: 0, createdAt: isoNow(-86400000 * 7), updatedAt: isoNow(-86400000 * 2) },
-    { id: "proj-002", name: "Personal Notes", sortOrder: 1, createdAt: isoNow(-86400000 * 5), updatedAt: isoNow(-86400000 * 1) },
-    { id: "proj-003", name: "Side Projects", sortOrder: 2, createdAt: isoNow(-86400000 * 3), updatedAt: isoNow(-3600000) },
+    { id: "proj-001", name: "Work Research", sortOrder: 0, groupId: "grp-001", isCollapsed: false, createdAt: isoNow(-86400000 * 7), updatedAt: isoNow(-86400000 * 2) },
+    { id: "proj-002", name: "Personal Notes", sortOrder: 1, groupId: null, isCollapsed: false, createdAt: isoNow(-86400000 * 5), updatedAt: isoNow(-86400000 * 1) },
+    { id: "proj-003", name: "Side Projects", sortOrder: 2, groupId: "grp-002", isCollapsed: true, createdAt: isoNow(-86400000 * 3), updatedAt: isoNow(-3600000) },
   ];
 
   const threads: ChatThread[] = [
@@ -59,9 +64,10 @@ export function seedDevelopmentData(db: Database): void {
     });
   }
 
+  for (const group of groups) insertProjectGroup(db, group);
   for (const project of projects) insertProject(db, project);
   for (const thread of threads) insertThread(db, thread);
   for (const message of messages) insertMessage(db, message);
 
-  console.log(`[seed] Seeded ${projects.length} projects, ${threads.length} threads, ${messages.length} messages.`);
+  console.log(`[seed] Seeded ${groups.length} groups, ${projects.length} projects, ${threads.length} threads, ${messages.length} messages.`);
 }

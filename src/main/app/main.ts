@@ -13,6 +13,8 @@ import {
   type WorkspaceRpcRequestHandlers,
 } from "../ipc/workspace-ipc.js";
 
+import { IPC_CHANNELS as CHANNELS } from "../../shared/contracts/workspace.js";
+
 const debugStartupEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
 const startupLogPath = path.resolve(
   process.env["TEMP"] ?? process.cwd(),
@@ -39,12 +41,12 @@ interface ElectrobunRuntimeModule {
     navigationRules: string | null;
     sandbox: boolean;
   }) => unknown;
-  defineElectrobunRPC: <Schema extends WorkspaceElectrobunRpcSchema>(
+    defineElectrobunRPC: <Schema extends WorkspaceElectrobunRpcSchema>(
     side: "bun",
     config: {
       handlers: {
         requests: WorkspaceRpcRequestHandlers;
-        messages: Record<never, never>;
+        messages: any;
       };
     }
   ) => unknown;
@@ -153,13 +155,34 @@ async function bootstrap(): Promise<void> {
     );
   }
 
+  let mainWindow: any;
+
   logStartup("Defining Electrobun RPC bridge");
   const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
     "bun",
     {
       handlers: {
         requests: requestHandlers,
-        messages: {},
+        messages: {
+          [CHANNELS.WINDOW_MINIMIZE]: () => {
+            logStartup("Minimizing window");
+            // @ts-ignore
+            if (mainWindow?.minimize) mainWindow.minimize();
+          },
+          [CHANNELS.WINDOW_MAXIMIZE]: () => {
+            logStartup("Maximizing window");
+            // @ts-ignore
+            if (mainWindow?.maximize) mainWindow.maximize();
+            // @ts-ignore
+            else if (mainWindow?.isMaximized && mainWindow.isMaximized()) mainWindow.unmaximize();
+          },
+          [CHANNELS.WINDOW_CLOSE]: () => {
+            logStartup("Closing window");
+            // @ts-ignore
+            if (mainWindow?.close) mainWindow.close();
+            else process.exit(0);
+          },
+        },
       },
     }
   );
@@ -168,7 +191,7 @@ async function bootstrap(): Promise<void> {
     "Creating BrowserWindow",
     debugStartupEnabled ? "url=views://renderer/index.html" : undefined
   );
-  new electrobunRuntime.BrowserWindow({
+  mainWindow = new electrobunRuntime.BrowserWindow({
     url: "views://renderer/index.html",
     html: null,
     preload: null,
@@ -181,7 +204,7 @@ async function bootstrap(): Promise<void> {
       width: 1200,
       height: 800,
     },
-    titleBarStyle: "default",
+    titleBarStyle: "hidden",
     transparent: false,
     navigationRules: null,
     sandbox: false,

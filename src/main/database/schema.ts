@@ -6,12 +6,22 @@ import type { Database } from "bun:sqlite";
 
 export function initializeSchema(db: Database): void {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS projects (
+    CREATE TABLE IF NOT EXISTS project_groups (
       id          TEXT    PRIMARY KEY NOT NULL,
       name        TEXT    NOT NULL,
       sort_order  INTEGER NOT NULL DEFAULT 0,
       created_at  TEXT    NOT NULL,
       updated_at  TEXT    NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id           TEXT    PRIMARY KEY NOT NULL,
+      name         TEXT    NOT NULL,
+      sort_order   INTEGER NOT NULL DEFAULT 0,
+      group_id     TEXT    REFERENCES project_groups(id) ON DELETE SET NULL,
+      is_collapsed INTEGER NOT NULL DEFAULT 0,
+      created_at   TEXT    NOT NULL,
+      updated_at   TEXT    NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS chat_threads (
@@ -39,4 +49,8 @@ export function initializeSchema(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_messages_thread_id    ON messages(thread_id);
     CREATE INDEX IF NOT EXISTS idx_messages_sequence     ON messages(thread_id, sequence_number);
   `);
+
+  // Attempt to add new columns to existing projects table (will fail silently if they already exist)
+  try { db.exec("ALTER TABLE projects ADD COLUMN group_id TEXT REFERENCES project_groups(id) ON DELETE SET NULL;"); } catch {}
+  try { db.exec("ALTER TABLE projects ADD COLUMN is_collapsed INTEGER NOT NULL DEFAULT 0;"); } catch {}
 }

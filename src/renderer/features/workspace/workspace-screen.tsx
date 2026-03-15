@@ -15,6 +15,7 @@ import {
 } from "../../components/workspace-shell.js";
 import { ThreadHeader } from "../../components/thread-header.js";
 import { MessageHistory } from "../../components/message-history.js";
+import { Header } from "../../components/header.js";
 import { MessageComposer } from "../../components/message-composer.js";
 import type { WorkspaceState } from "../../state/workspace-store.js";
 
@@ -22,7 +23,6 @@ const controller = createWorkspaceController(workspaceIpcClient);
 
 type ProjectDialogState =
   | { mode: "closed" }
-  | { mode: "create" }
   | { mode: "delete"; project: ProjectSummary };
 
 export function WorkspaceScreen(): React.ReactElement {
@@ -31,6 +31,7 @@ export function WorkspaceScreen(): React.ReactElement {
     mode: "closed",
   });
   const [projectName, setProjectName] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = workspaceStore.subscribe(setState);
@@ -50,17 +51,42 @@ export function WorkspaceScreen(): React.ReactElement {
     controller.sendMessage(activeId, state.composeText);
   }, [state.activeThread, state.composeText]);
 
-  const handleCreateProject = useCallback(() => {
-    setProjectName("");
-    setProjectDialog({ mode: "create" });
+  const handleCreateProject = useCallback(async () => {
+    const newId = await controller.createProject("New Project");
+    if (newId) {
+      setEditingItemId(newId);
+    }
+  }, []);
+
+  const handleUpdateProject = useCallback((id: string, name?: string, isCollapsed?: boolean) => {
+    controller.updateProject(id, name, isCollapsed);
+  }, []);
+
+  const handleUpdateThread = useCallback((id: string, title: string) => {
+    controller.updateThread(id, title);
+  }, []);
+
+  const handleMoveProjectToGroup = useCallback((projectId: string, groupId: string | null) => {
+    controller.moveProjectToGroup(projectId, groupId);
+  }, []);
+
+  const handleReorderProject = useCallback((projectId: string, targetSortOrder: number) => {
+    controller.reorderProject(projectId, targetSortOrder);
+  }, []);
+
+  const handleReorderThread = useCallback((threadId: string, targetSortOrder: number) => {
+    controller.reorderThread(threadId, targetSortOrder);
   }, []);
 
   const handleDeleteProject = useCallback((project: ProjectSummary) => {
     setProjectDialog({ mode: "delete", project });
   }, []);
 
-  const handleCreateThread = useCallback((project: ProjectSummary) => {
-    controller.createThread(project.id);
+  const handleCreateThread = useCallback(async (project: ProjectSummary) => {
+    const newId = await controller.createThread(project.id);
+    if (newId) {
+      setEditingItemId(newId);
+    }
   }, []);
 
   const closeProjectDialog = useCallback(() => {
@@ -90,14 +116,22 @@ export function WorkspaceScreen(): React.ReactElement {
 
   const sidebar = (
     <Sidebar
+      projectGroups={state.snapshot?.projectGroups ?? []}
       projects={state.snapshot?.projects ?? []}
       threadsByProject={state.snapshot?.threadsByProject ?? {}}
       activeThreadId={state.activeThread?.thread.id ?? null}
       isBusy={state.isLoading}
+      editingItemId={editingItemId}
+      onSetEditingItemId={setEditingItemId}
       onSelectThread={handleSelectThread}
       onCreateProject={handleCreateProject}
+      onUpdateProject={handleUpdateProject}
       onCreateThread={handleCreateThread}
+      onUpdateThread={handleUpdateThread}
       onDeleteProject={handleDeleteProject}
+      onMoveProjectToGroup={handleMoveProjectToGroup}
+      onReorderProject={handleReorderProject}
+      onReorderThread={handleReorderThread}
     />
   );
 
@@ -122,25 +156,30 @@ export function WorkspaceScreen(): React.ReactElement {
   );
 
   return (
-    <WorkspaceShell
-      sidebar={sidebar}
-      main={
-        <>
-          {mainContent}
-          <ProjectDialog
-            dialog={projectDialog}
-            projectName={projectName}
-            isBusy={state.isLoading}
-            onProjectNameChange={setProjectName}
-            onClose={closeProjectDialog}
-            onConfirmCreate={confirmCreateProject}
-            onConfirmDelete={confirmDeleteProject}
-          />
-        </>
-      }
-      isLoading={state.isLoading && state.snapshot === null}
-      error={state.error}
-    />
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+      <Header />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <WorkspaceShell
+          sidebar={sidebar}
+          main={
+            <>
+              {mainContent}
+              <ProjectDialog
+                dialog={projectDialog}
+                projectName={projectName}
+                isBusy={state.isLoading}
+                onProjectNameChange={setProjectName}
+                onClose={closeProjectDialog}
+                onConfirmCreate={confirmCreateProject}
+                onConfirmDelete={confirmDeleteProject}
+              />
+            </>
+          }
+          isLoading={state.isLoading && state.snapshot === null}
+          error={state.error}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -167,10 +206,10 @@ function ProjectDialog({
     return null;
   }
 
-  const isCreate = dialog.mode === "create";
-  const title = isCreate ? "Create project" : "Delete project";
-  const confirmLabel = isCreate ? "Create project" : "Delete project";
-  const canSubmit = isCreate ? projectName.trim().length > 0 && !isBusy : !isBusy;
+  const isCreate = false;
+  const title = "Delete project";
+  const confirmLabel = "Delete project";
+  const canSubmit = !isBusy;
 
   return (
     <div
@@ -184,34 +223,19 @@ function ProjectDialog({
         <h2 id="project-dialog-title" style={dialogTitleStyle}>
           {title}
         </h2>
-        {isCreate ? (
-          <>
-            <p style={dialogCopyStyle}>
-              Create a new workspace project. The project will appear in the sidebar immediately.
-            </p>
-            <input
-              autoFocus
-              value={projectName}
-              onChange={(event) => onProjectNameChange(event.target.value)}
-              placeholder="Project name"
-              style={dialogInputStyle}
-            />
-          </>
-        ) : (
-          <p style={dialogCopyStyle}>
-            Delete <strong>{dialog.project.name}</strong>? All threads and messages in this project
-            will be removed.
-          </p>
-        )}
+        <p style={dialogCopyStyle}>
+          Delete <strong>{dialog.project.name}</strong>? All threads and messages in this project
+          will be removed.
+        </p>
         <div style={dialogActionsStyle}>
           <button type="button" onClick={onClose} disabled={isBusy} style={dialogSecondaryButtonStyle}>
             Cancel
           </button>
           <button
             type="button"
-            onClick={isCreate ? onConfirmCreate : onConfirmDelete}
+            onClick={onConfirmDelete}
             disabled={!canSubmit}
-            style={isCreate ? dialogPrimaryButtonStyle : dialogDangerButtonStyle}
+            style={dialogDangerButtonStyle}
           >
             {confirmLabel}
           </button>

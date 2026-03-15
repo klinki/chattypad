@@ -31,9 +31,7 @@ import type { Project, ChatThread, Message } from "../../src/shared/models/works
 function makeProject(overrides?: Partial<Project>): Project {
   return {
     id: "proj-test",
-    name: "Test Project",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    name: "Test Project", sortOrder: 0, groupId: null, isCollapsed: false, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
     ...overrides,
   };
@@ -44,8 +42,7 @@ function makeThread(overrides?: Partial<ChatThread>): ChatThread {
     id: "thread-test",
     projectId: "proj-test",
     title: "Test Thread",
-    sortOrder: 0,
-    createdAt: "2024-01-01T00:00:00.000Z",
+    sortOrder: 0, createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
     lastMessageAt: null,
     ...overrides,
@@ -105,7 +102,7 @@ describe("Project repository", () => {
   test("projectToSummary maps fields correctly", () => {
     const project = makeProject({ id: "p1", name: "My Project", sortOrder: 5 });
     const summary = projectToSummary(project);
-    expect(summary).toEqual({ id: "p1", name: "My Project", sortOrder: 5 });
+    expect(summary).toEqual({ id: "p1", name: "My Project", sortOrder: 5, groupId: null, isCollapsed: false });
   });
 
   test("getNextProjectSortOrder returns the next available sort order", () => {

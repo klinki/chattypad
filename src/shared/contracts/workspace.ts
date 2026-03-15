@@ -4,10 +4,18 @@
  * specs/001-desktop-chat-app/contracts/workspace-ipc-contract.md
  */
 
+export interface ProjectGroupSummary {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
 export interface ProjectSummary {
   id: string;
   name: string;
   sortOrder: number;
+  groupId: string | null;
+  isCollapsed: boolean;
 }
 
 export interface ThreadSummary {
@@ -28,6 +36,7 @@ export interface MessageView {
 }
 
 export interface WorkspaceSnapshot {
+  projectGroups: ProjectGroupSummary[];
   projects: ProjectSummary[];
   threadsByProject: Record<string, ThreadSummary[]>;
   activeThreadId: string | null;
@@ -40,6 +49,40 @@ export interface ActiveThreadDetail {
 
 export interface ProjectCreateRequest {
   name: string;
+}
+
+export interface ProjectUpdateRequest {
+  projectId: string;
+  name?: string;
+  isCollapsed?: boolean;
+}
+
+export interface ProjectGroupCreateRequest {
+  name: string;
+}
+
+export interface ProjectGroupDeleteRequest {
+  groupId: string;
+}
+
+export interface ProjectGroupUpdateRequest {
+  groupId: string;
+  name: string;
+}
+
+export interface ProjectMoveToGroupRequest {
+  projectId: string;
+  groupId: string | null;
+}
+
+export interface ReorderRequest {
+  itemId: string;
+  targetSortOrder: number;
+}
+
+export interface ThreadUpdateRequest {
+  threadId: string;
+  title: string;
 }
 
 export interface ProjectDeleteRequest {
@@ -65,9 +108,20 @@ export const IPC_CHANNELS = {
   WORKSPACE_LOAD: "workspace:load",
   PROJECT_CREATE: "project:create",
   PROJECT_DELETE: "project:delete",
+  PROJECT_UPDATE: "project:update",
+  PROJECT_GROUP_CREATE: "project-group:create",
+  PROJECT_GROUP_DELETE: "project-group:delete",
+  PROJECT_GROUP_UPDATE: "project-group:update",
+  PROJECT_MOVE_TO_GROUP: "project:move-to-group",
+  PROJECT_REORDER: "project:reorder",
   THREAD_CREATE: "thread:create",
+  THREAD_UPDATE: "thread:update",
+  THREAD_REORDER: "thread:reorder",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
+  WINDOW_MINIMIZE: "window:minimize",
+  WINDOW_MAXIMIZE: "window:maximize",
+  WINDOW_CLOSE: "window:close",
 } as const;
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];

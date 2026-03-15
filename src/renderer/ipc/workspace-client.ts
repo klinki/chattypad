@@ -24,13 +24,21 @@ export interface WorkspaceIpcClient {
   loadWorkspace(): Promise<IpcResult<WorkspaceSnapshot>>;
   createProject(name: string): Promise<IpcResult<WorkspaceSnapshot>>;
   deleteProject(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  updateProject(projectId: string, name?: string, isCollapsed?: boolean): Promise<IpcResult<WorkspaceSnapshot>>;
   createThread(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  updateThread(threadId: string, title: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  moveProjectToGroup(projectId: string, groupId: string | null): Promise<IpcResult<WorkspaceSnapshot>>;
+  reorderProject(projectId: string, targetSortOrder: number): Promise<IpcResult<WorkspaceSnapshot>>;
+  reorderThread(threadId: string, targetSortOrder: number): Promise<IpcResult<WorkspaceSnapshot>>;
   openThread(threadId: string): Promise<IpcResult<ActiveThreadDetail>>;
   sendMessage(
     threadId: string,
     content: string,
     role: string
   ): Promise<IpcResult<ActiveThreadDetail>>;
+  minimizeWindow(): void;
+  maximizeWindow(): void;
+  closeWindow(): void;
 }
 
 type WorkspaceRequestMap = WorkspaceElectrobunRpcSchema["bun"]["requests"];
@@ -50,6 +58,7 @@ interface WorkspaceRendererRpc {
 }
 
 let bridge: WorkspaceRpcRequestProxy | null | undefined;
+let messageBridge: any | null | undefined;
 
 function hasElectrobunRuntime(): boolean {
   if (typeof window === "undefined") {
@@ -71,6 +80,7 @@ function getBridge(): WorkspaceRpcRequestProxy | null {
 
   if (!hasElectrobunRuntime()) {
     bridge = null;
+    messageBridge = null;
     return bridge;
   }
 
@@ -85,9 +95,11 @@ function getBridge(): WorkspaceRpcRequestProxy | null {
 
     const electrobun = new Electrobun.Electroview({ rpc });
     bridge = electrobun.rpc?.request ?? rpc.request;
+    messageBridge = electrobun.rpc?.send ?? rpc.send;
   } catch (error) {
     console.error("Failed to initialize the Electrobun IPC bridge.", error);
     bridge = null;
+    messageBridge = null;
   }
 
   return bridge;
@@ -104,7 +116,7 @@ function unavailableBridgeResult<T>(): IpcResult<T> {
   };
 }
 
-async function invokeIpc<Channel extends IpcChannel>(
+async function invokeIpc<Channel extends keyof WorkspaceRequestMap>(
   channel: Channel,
   payload?: WorkspaceRequestMap[Channel]["params"]
 ): Promise<WorkspaceRequestMap[Channel]["response"]> {
@@ -121,6 +133,17 @@ async function invokeIpc<Channel extends IpcChannel>(
   return request(payload);
 }
 
+function invokeMessage(channel: string, payload?: any): void {
+  getBridge(); // Ensure initialization
+  if (messageBridge && typeof messageBridge === 'function') {
+    messageBridge(channel, payload);
+  } else if (messageBridge && messageBridge[channel]) {
+    messageBridge[channel](payload);
+  } else {
+    console.warn(`Cannot send IPC message: bridge unavailable for ${channel}`);
+  }
+}
+
 export const workspaceIpcClient: WorkspaceIpcClient = {
   loadWorkspace: () => invokeIpc(IPC_CHANNELS.WORKSPACE_LOAD),
   createProject: (name: ProjectCreateRequest["name"]) =>
@@ -129,6 +152,20 @@ export const workspaceIpcClient: WorkspaceIpcClient = {
     invokeIpc(IPC_CHANNELS.PROJECT_DELETE, { projectId }),
   createThread: (projectId: ThreadCreateRequest["projectId"]) =>
     invokeIpc(IPC_CHANNELS.THREAD_CREATE, { projectId }),
+  updateProject: (projectId, name, isCollapsed) => {
+    const payload: any = { projectId };
+    if (name !== undefined) payload.name = name;
+    if (isCollapsed !== undefined) payload.isCollapsed = isCollapsed;
+    return invokeIpc(IPC_CHANNELS.PROJECT_UPDATE, payload);
+  },
+  updateThread: (threadId, title) =>
+    invokeIpc(IPC_CHANNELS.THREAD_UPDATE, { threadId, title }),
+  moveProjectToGroup: (projectId, groupId) =>
+    invokeIpc(IPC_CHANNELS.PROJECT_MOVE_TO_GROUP, { projectId, groupId }),
+  reorderProject: (projectId, targetSortOrder) =>
+    invokeIpc(IPC_CHANNELS.PROJECT_REORDER, { itemId: projectId, targetSortOrder }),
+  reorderThread: (threadId, targetSortOrder) =>
+    invokeIpc(IPC_CHANNELS.THREAD_REORDER, { itemId: threadId, targetSortOrder }),
   openThread: (threadId: ThreadOpenRequest["threadId"]) =>
     invokeIpc(IPC_CHANNELS.THREAD_OPEN, { threadId }),
   sendMessage: (threadId, content, role) =>
@@ -137,4 +174,7 @@ export const workspaceIpcClient: WorkspaceIpcClient = {
       content,
       role,
     } satisfies MessageSendRequest),
+  minimizeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_MINIMIZE),
+  maximizeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_MAXIMIZE),
+  closeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_CLOSE),
 };

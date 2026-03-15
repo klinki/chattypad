@@ -7,10 +7,20 @@ export type MessageRole = "user" | "assistant" | "system";
 
 export const MESSAGE_ROLES: ReadonlySet<MessageRole> = new Set(["user", "assistant", "system"]);
 
+export interface ProjectGroup {
+  id: string;
+  name: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   sortOrder: number;
+  groupId: string | null;
+  isCollapsed: boolean;
   createdAt: string;
   updatedAt: string;
 }

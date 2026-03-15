@@ -3,16 +3,26 @@
  * Provides project, thread, and message repository operations.
  */
 import type { Database } from "bun:sqlite";
-import type { Project, ChatThread, Message, MessageRole } from "../../shared/models/workspace.js";
+import type { Project, ProjectGroup, ChatThread, Message, MessageRole } from "../../shared/models/workspace.js";
 import { MESSAGE_ROLES } from "../../shared/models/workspace.js";
-import type { ProjectSummary, ThreadSummary, MessageView } from "../../shared/contracts/workspace.js";
+import type { ProjectSummary, ProjectGroupSummary, ThreadSummary, MessageView } from "../../shared/contracts/workspace.js";
 
 // ─── Raw DB row types ──────────────────────────────────────────────────────────
+
+interface ProjectGroupRow {
+  id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ProjectRow {
   id: string;
   name: string;
   sort_order: number;
+  group_id: string | null;
+  is_collapsed: number;
   created_at: string;
   updated_at: string;
 }
@@ -38,11 +48,23 @@ interface MessageRow {
 
 // ─── Mapping helpers ───────────────────────────────────────────────────────────
 
+function rowToProjectGroup(row: ProjectGroupRow): ProjectGroup {
+  return {
+    id: row.id,
+    name: row.name,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function rowToProject(row: ProjectRow): Project {
   return {
     id: row.id,
     name: row.name,
     sortOrder: row.sort_order,
+    groupId: row.group_id ?? null,
+    isCollapsed: row.is_collapsed === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -74,6 +96,52 @@ function rowToMessage(row: MessageRow): Message {
   };
 }
 
+// ─── Project Group repository ──────────────────────────────────────────────────
+
+export function getAllProjectGroups(db: Database): ProjectGroup[] {
+  const rows = db
+    .query<ProjectGroupRow, []>("SELECT * FROM project_groups ORDER BY sort_order ASC, created_at ASC")
+    .all();
+  return rows.map(rowToProjectGroup);
+}
+
+export function getProjectGroupById(db: Database, id: string): ProjectGroup | null {
+  const row = db
+    .query<ProjectGroupRow, [string]>("SELECT * FROM project_groups WHERE id = ?")
+    .get(id);
+  return row ? rowToProjectGroup(row) : null;
+}
+
+export function insertProjectGroup(db: Database, group: ProjectGroup): void {
+  db.run(
+    `INSERT INTO project_groups (id, name, sort_order, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [group.id, group.name, group.sortOrder, group.createdAt, group.updatedAt]
+  );
+}
+
+export function updateProjectGroup(db: Database, id: string, name: string): void {
+  db.run("UPDATE project_groups SET name = ?, updated_at = ? WHERE id = ?", [
+    name,
+    new Date().toISOString(),
+    id,
+  ]);
+}
+
+export function deleteProjectGroup(db: Database, groupId: string): void {
+  // Projects belonging to this group will have group_id set to NULL due to ON DELETE SET NULL
+  db.run("DELETE FROM project_groups WHERE id = ?", [groupId]);
+}
+
+export function getNextProjectGroupSortOrder(db: Database): number {
+  const result = db
+    .query<{ max_sort_order: number | null }, []>(
+      "SELECT MAX(sort_order) AS max_sort_order FROM project_groups"
+    )
+    .get();
+  return (result?.max_sort_order ?? -1) + 1;
+}
+
 // ─── Project repository ────────────────────────────────────────────────────────
 
 export function getAllProjects(db: Database): Project[] {
@@ -92,10 +160,52 @@ export function getProjectById(db: Database, id: string): Project | null {
 
 export function insertProject(db: Database, project: Project): void {
   db.run(
-    `INSERT INTO projects (id, name, sort_order, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?)`,
-    [project.id, project.name, project.sortOrder, project.createdAt, project.updatedAt]
+    `INSERT INTO projects (id, name, sort_order, group_id, is_collapsed, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      project.id,
+      project.name,
+      project.sortOrder,
+      project.groupId,
+      project.isCollapsed ? 1 : 0,
+      project.createdAt,
+      project.updatedAt,
+    ]
   );
+}
+
+export function updateProject(
+  db: Database,
+  projectId: string,
+  updates: { name?: string; isCollapsed?: boolean; groupId?: string | null }
+): void {
+  const sets: string[] = ["updated_at = ?"];
+  const params: any[] = [new Date().toISOString()];
+
+  if (updates.name !== undefined) {
+    sets.push("name = ?");
+    params.push(updates.name);
+  }
+  if (updates.isCollapsed !== undefined) {
+    sets.push("is_collapsed = ?");
+    params.push(updates.isCollapsed ? 1 : 0);
+  }
+  if (updates.groupId !== undefined) {
+    sets.push("group_id = ?");
+    params.push(updates.groupId);
+  }
+
+  params.push(projectId);
+
+  db.run(`UPDATE projects SET ${sets.join(", ")} WHERE id = ?`, params);
+}
+
+export function updateProjectSortOrder(db: Database, projectId: string, sortOrder: number): void {
+  db.run("UPDATE projects SET sort_order = ?, updated_at = ? WHERE id = ?", [
+    sortOrder,
+    new Date().toISOString(),
+    projectId,
+  ]);
 }
 
 export function deleteProject(db: Database, projectId: string): void {
@@ -143,6 +253,22 @@ export function insertThread(db: Database, thread: ChatThread): void {
       thread.lastMessageAt,
     ]
   );
+}
+
+export function updateThreadTitle(db: Database, threadId: string, title: string): void {
+  db.run("UPDATE chat_threads SET title = ?, updated_at = ? WHERE id = ?", [
+    title,
+    new Date().toISOString(),
+    threadId,
+  ]);
+}
+
+export function updateThreadSortOrder(db: Database, threadId: string, sortOrder: number): void {
+  db.run("UPDATE chat_threads SET sort_order = ?, updated_at = ? WHERE id = ?", [
+    sortOrder,
+    new Date().toISOString(),
+    threadId,
+  ]);
 }
 
 export function getNextThreadSortOrder(db: Database, projectId: string): number {
@@ -210,8 +336,18 @@ export function insertMessage(db: Database, message: Message): void {
 
 // ─── View mapping for IPC contracts ───────────────────────────────────────────
 
+export function projectGroupToSummary(g: ProjectGroup): ProjectGroupSummary {
+  return { id: g.id, name: g.name, sortOrder: g.sortOrder };
+}
+
 export function projectToSummary(p: Project): ProjectSummary {
-  return { id: p.id, name: p.name, sortOrder: p.sortOrder };
+  return {
+    id: p.id,
+    name: p.name,
+    sortOrder: p.sortOrder,
+    groupId: p.groupId,
+    isCollapsed: p.isCollapsed,
+  };
 }
 
 export function threadToSummary(t: ChatThread): ThreadSummary {
