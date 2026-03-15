@@ -211,16 +211,16 @@ async function bootstrap(): Promise<void> {
       width: 1200,
       height: 800,
     },
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: "hidden",
     // @ts-ignore: inject styleMask to force resizable frameless window if supported
     styleMask: {
-      Borderless: true,
+      Borderless: false,
       Resizable: true,
-      Titled: true,
+      Titled: false,
       Closable: true,
       Miniaturizable: true,
     },
-    transparent: false,
+    transparent: true,
     navigationRules: null,
     sandbox: false,
   });
