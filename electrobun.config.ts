@@ -28,4 +28,7 @@ export default {
       bundleCEF: false,
     },
   },
+  scripts: {
+    postBuild: "scripts/apply-windows-dpi-manifest.mjs",
+  },
 } satisfies ElectrobunConfig;

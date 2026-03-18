@@ -80,6 +80,9 @@ The text in the UI does not look crystal clear and appears slightly washed out o
    * *Reasoning*: `optimizeLegibility` is not helpful for this desktop UI and can interfere with the platform's normal text rasterization choices.
 3. **Using the native Windows renderer instead of forced CEF**: We updated the main window config so Windows uses Electrobun's native renderer.
    * *Reasoning*: This matches the framework's intended default on Windows and is the most likely path to correct DPI awareness and sharper text rendering.
+4. **Embedding a Windows `PerMonitorV2` DPI-awareness manifest into the built executables**: We added a build hook that patches `launcher.exe` and `bun.exe` with an application manifest declaring `PerMonitorV2` DPI awareness, with `true/pm` as the older compatibility fallback.
+   * *Reasoning*: If the host process is not explicitly DPI-aware, Windows can bitmap-scale the entire surface, which would make all text look soft regardless of renderer CSS.
+   * *Status*: Implemented in the build pipeline for Windows. Manual validation on a high-DPI Windows display is still required.
 
 **Current Status:**
 Text rendering was cleaned up at the CSS and renderer-selection level, but the more serious blocker is now the unstable frameless window behavior described above. Further investigation is still needed into Electrobun's Windows backend, especially DPI awareness, transparent/layered window behavior, resize hit-testing, and focus/input handling after native resize operations.
