@@ -47,6 +47,15 @@ export interface ActiveThreadDetail {
   messages: MessageView[];
 }
 
+export interface WindowFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface WindowFrameUpdateRequest extends WindowFrame {}
+
 export interface ProjectCreateRequest {
   name: string;
 }
@@ -119,6 +128,8 @@ export const IPC_CHANNELS = {
   THREAD_REORDER: "thread:reorder",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
+  WINDOW_GET_FRAME: "window:get-frame",
+  WINDOW_SET_FRAME: "window:set-frame",
   WINDOW_MINIMIZE: "window:minimize",
   WINDOW_MAXIMIZE: "window:maximize",
   WINDOW_CLOSE: "window:close",

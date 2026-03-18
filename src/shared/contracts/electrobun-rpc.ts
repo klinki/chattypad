@@ -12,6 +12,8 @@ import type {
   ThreadCreateRequest,
   ThreadUpdateRequest,
   WorkspaceSnapshot,
+  WindowFrame,
+  WindowFrameUpdateRequest,
 } from "./workspace.js";
 import { IPC_CHANNELS } from "./workspace.js";
 
@@ -85,6 +87,14 @@ export interface WorkspaceElectrobunRpcSchema {
       [IPC_CHANNELS.MESSAGE_SEND]: {
         params: MessageSendRequest;
         response: IpcResult<ActiveThreadDetail>;
+      };
+      [IPC_CHANNELS.WINDOW_GET_FRAME]: {
+        params: undefined;
+        response: IpcResult<WindowFrame>;
+      };
+      [IPC_CHANNELS.WINDOW_SET_FRAME]: {
+        params: WindowFrameUpdateRequest;
+        response: IpcResult<WindowFrame>;
       };
     };
     messages: {

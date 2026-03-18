@@ -12,6 +12,8 @@ import type {
   ProjectCreateRequest,
   ProjectDeleteRequest,
   ThreadCreateRequest,
+  WindowFrame,
+  WindowFrameUpdateRequest,
 } from "../../shared/contracts/workspace.js";
 import { IPC_CHANNELS } from "../../shared/contracts/workspace.js";
 import type {
@@ -36,6 +38,8 @@ export interface WorkspaceIpcClient {
     content: string,
     role: string
   ): Promise<IpcResult<ActiveThreadDetail>>;
+  getWindowFrame(): Promise<IpcResult<WindowFrame>>;
+  setWindowFrame(frame: WindowFrameUpdateRequest): Promise<IpcResult<WindowFrame>>;
   minimizeWindow(): void;
   maximizeWindow(): void;
   closeWindow(): void;
@@ -174,6 +178,8 @@ export const workspaceIpcClient: WorkspaceIpcClient = {
       content,
       role,
     } satisfies MessageSendRequest),
+  getWindowFrame: () => invokeIpc(IPC_CHANNELS.WINDOW_GET_FRAME),
+  setWindowFrame: (frame) => invokeIpc(IPC_CHANNELS.WINDOW_SET_FRAME, frame),
   minimizeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_MINIMIZE),
   maximizeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_MAXIMIZE),
   closeWindow: () => invokeMessage(IPC_CHANNELS.WINDOW_CLOSE),

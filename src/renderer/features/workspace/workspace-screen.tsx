@@ -17,9 +17,32 @@ import { ThreadHeader } from "../../components/thread-header.js";
 import { MessageHistory } from "../../components/message-history.js";
 import { Header } from "../../components/header.js";
 import { MessageComposer } from "../../components/message-composer.js";
+import { WindowResizeHandles } from "../../components/window-resize-handles.js";
 import type { WorkspaceState } from "../../state/workspace-store.js";
 
 const controller = createWorkspaceController(workspaceIpcClient);
+
+declare global {
+  interface Window {
+    __CHATTYPAD_WINDOW_MODE__?: "native" | "frameless";
+  }
+}
+
+function getDefaultWindowMode(): "native" | "frameless" {
+  if (typeof navigator === "undefined") {
+    return "frameless";
+  }
+
+  return navigator.platform.toLowerCase().startsWith("win") ? "native" : "frameless";
+}
+
+function getWindowMode(): "native" | "frameless" {
+  if (typeof window === "undefined") {
+    return "frameless";
+  }
+
+  return window.__CHATTYPAD_WINDOW_MODE__ ?? getDefaultWindowMode();
+}
 
 type ProjectDialogState =
   | { mode: "closed" }
@@ -27,6 +50,7 @@ type ProjectDialogState =
 
 export function WorkspaceScreen(): React.ReactElement {
   const [state, setState] = useState<WorkspaceState>(workspaceStore.getState());
+  const [windowMode, setWindowMode] = useState<"native" | "frameless">(getWindowMode());
   const [projectDialog, setProjectDialog] = useState<ProjectDialogState>({
     mode: "closed",
   });
@@ -37,6 +61,27 @@ export function WorkspaceScreen(): React.ReactElement {
     const unsub = workspaceStore.subscribe(setState);
     controller.loadWorkspace();
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncWindowMode = (event?: Event) => {
+      const nextMode =
+        event instanceof CustomEvent && (event.detail === "native" || event.detail === "frameless")
+          ? event.detail
+          : getWindowMode();
+      setWindowMode(nextMode);
+    };
+
+    window.addEventListener("chattypad-window-mode", syncWindowMode);
+    syncWindowMode();
+
+    return () => {
+      window.removeEventListener("chattypad-window-mode", syncWindowMode);
+    };
   }, []);
 
   const handleSelectThread = useCallback((threadId: string) => {
@@ -157,7 +202,8 @@ export function WorkspaceScreen(): React.ReactElement {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      <Header />
+      {windowMode === "frameless" ? <WindowResizeHandles /> : null}
+      <Header mode={windowMode === "native" ? "inline" : "frameless"} />
       <div style={{ flex: 1, minHeight: 0 }}>
         <WorkspaceShell
           sidebar={sidebar}

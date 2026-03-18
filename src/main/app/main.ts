@@ -12,8 +12,10 @@ import {
   createWorkspaceRpcRequestHandlers,
   type WorkspaceRpcRequestHandlers,
 } from "../ipc/workspace-ipc.js";
+import { resolveWindowConfig, type WindowMode } from "./window-config.js";
 
 import { IPC_CHANNELS as CHANNELS } from "../../shared/contracts/workspace.js";
+import type { WindowFrameUpdateRequest } from "../../shared/contracts/workspace.js";
 
 const debugStartupEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
 const startupLogPath = path.resolve(
@@ -27,7 +29,7 @@ interface ElectrobunRuntimeModule {
     url: string;
     html: string | null;
     preload: string | null;
-    renderer: "native" | "cef";
+    renderer?: "native" | "cef";
     rpc: unknown;
     title: string;
     frame: {
@@ -45,7 +47,7 @@ interface ElectrobunRuntimeModule {
     side: "bun",
     config: {
       handlers: {
-        requests: WorkspaceRpcRequestHandlers;
+        requests: Record<string, unknown>;
         messages: any;
       };
     }
@@ -93,6 +95,17 @@ function initializeStartupLogging(): void {
     console.log(`[startup] Debug log file: ${startupLogPath}`);
     appendStartupLog("INFO", "Debug logging enabled");
   }
+}
+
+function createWindowUnavailableResult() {
+  return {
+    success: false as const,
+    error: {
+      code: "WINDOW_UNAVAILABLE",
+      message: "Window is not available.",
+      recoverable: false,
+    },
+  };
 }
 
 initializeStartupLogging();
@@ -147,7 +160,7 @@ async function bootstrap(): Promise<void> {
   const electrobunRuntime = await loadElectrobunRuntime();
 
   logStartup("Creating workspace RPC request handlers");
-  const requestHandlers = createWorkspaceRpcRequestHandlers(db);
+  const workspaceRequestHandlers = createWorkspaceRpcRequestHandlers(db);
 
   if (!electrobunRuntime) {
     throw new Error(
@@ -160,6 +173,38 @@ async function bootstrap(): Promise<void> {
   let isMaximized = false;
 
   logStartup("Defining Electrobun RPC bridge");
+  const requestHandlers = {
+    ...workspaceRequestHandlers,
+    [CHANNELS.WINDOW_GET_FRAME]: () => {
+      if (!mainWindow?.getFrame) {
+        return createWindowUnavailableResult();
+      }
+
+      return {
+        success: true as const,
+        data: mainWindow.getFrame(),
+      };
+    },
+    [CHANNELS.WINDOW_SET_FRAME]: (payload?: WindowFrameUpdateRequest) => {
+      if (
+        !mainWindow?.setFrame ||
+        !payload ||
+        !Number.isFinite(payload.x) ||
+        !Number.isFinite(payload.y) ||
+        !Number.isFinite(payload.width) ||
+        !Number.isFinite(payload.height)
+      ) {
+        return createWindowUnavailableResult();
+      }
+
+      mainWindow.setFrame(payload.x, payload.y, payload.width, payload.height);
+      return {
+        success: true as const,
+        data: payload,
+      };
+    },
+  } satisfies Record<string, unknown>;
+
   const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
     "bun",
     {
@@ -198,11 +243,25 @@ async function bootstrap(): Promise<void> {
     "Creating BrowserWindow",
     debugStartupEnabled ? "url=views://renderer/index.html" : undefined
   );
+  const requestedWindowMode: WindowMode | undefined =
+    process.platform === "win32"
+      ? process.env["CHATTYPAD_WIN_FRAMELESS"] === "1"
+        ? "frameless"
+        : "native"
+      : undefined;
+  const windowConfig = resolveWindowConfig(process.platform, requestedWindowMode);
+  logStartup(
+    "Resolved window configuration",
+    debugStartupEnabled
+      ? `platform=${process.platform}\nmode=${windowConfig.windowMode}\nrenderer=${windowConfig.renderer}\ntransparent=${windowConfig.transparent}`
+      : undefined
+  );
+
   mainWindow = new electrobunRuntime.BrowserWindow({
     url: "views://renderer/index.html",
     html: null,
     preload: null,
-    renderer: "cef",
+    renderer: windowConfig.renderer,
     rpc,
     title: "ChattyPad",
     frame: {
@@ -211,18 +270,18 @@ async function bootstrap(): Promise<void> {
       width: 1200,
       height: 800,
     },
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: windowConfig.titleBarStyle,
     // @ts-ignore: inject styleMask to force resizable frameless window if supported
-    styleMask: {
-      Borderless: true,
-      Resizable: true,
-      Titled: true,
-      Closable: true,
-      Miniaturizable: true,
-    },
-    transparent: true,
+    styleMask: windowConfig.styleMask,
+    transparent: windowConfig.transparent,
     navigationRules: null,
     sandbox: false,
+  });
+  // Pass the selected window mode without modifying the HTML asset URL.
+  mainWindow.webview?.on?.("dom-ready", () => {
+    mainWindow.webview.executeJavascript(
+      `window.__CHATTYPAD_WINDOW_MODE__ = ${JSON.stringify(windowConfig.windowMode)}; window.dispatchEvent(new CustomEvent("chattypad-window-mode", { detail: window.__CHATTYPAD_WINDOW_MODE__ }));`
+    );
   });
   logStartup("BrowserWindow created");
 }
