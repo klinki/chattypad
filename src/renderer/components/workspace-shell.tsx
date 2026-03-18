@@ -86,13 +86,11 @@ export function WorkspaceEmptyState(): React.ReactElement {
       }}
     >
       <div style={{ fontSize: 32 }}>🗂️</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8" }}>
-        No workspace data yet
+      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8", textAlign: "center", maxWidth: 400 }}>
+        To start working, let's create a first project and thread
       </div>
       <div style={{ fontSize: 14, maxWidth: 320, textAlign: "center" }}>
-        The local workspace is empty. Start the app on a Bun + Electrobun
-        workstation to generate or seed the SQLite data, then reopen the
-        workspace.
+        No projects found. Use the sidebar to add your first workspace project.
       </div>
     </div>
   );

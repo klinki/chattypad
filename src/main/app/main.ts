@@ -6,7 +6,6 @@ import fs from "fs";
 import path from "path";
 import { initializeSchema } from "../database/schema.js";
 import { getDatabase, resolveDatabasePath } from "../database/sqlite.js";
-import { seedDevelopmentData } from "../database/seed.js";
 import type { WorkspaceElectrobunRpcSchema } from "../../shared/contracts/electrobun-rpc.js";
 import {
   createWorkspaceRpcRequestHandlers,
@@ -153,9 +152,6 @@ async function bootstrap(): Promise<void> {
   initializeSchema(db);
   logStartup("Database schema initialized");
 
-  logStartup("Seeding development data if needed");
-  seedDevelopmentData(db);
-  logStartup("Development seed step complete");
 
   const electrobunRuntime = await loadElectrobunRuntime();
 

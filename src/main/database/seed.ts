@@ -1,6 +1,10 @@
 /**
  * Development seed data for manual workspace validation.
  * Provides pre-populated projects, threads, and messages for quickstart flows.
+ * 
+ * NOTE: This function is no longer called automatically during application bootstrap
+ * to ensure a clean onboarding experience for new users. It should only be used
+ * for manual development or testing purposes.
  */
 import type { Database } from "bun:sqlite";
 import { insertProject, insertThread, insertMessage, insertProjectGroup } from "./workspace-repository.js";

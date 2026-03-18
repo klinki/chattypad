@@ -1,4 +1,4 @@
-# Gemini CLI Agent Context: ChattyPad
+﻿# Gemini CLI Agent Context: ChattyPad
 
 ## Project Context
 - **Name**: ChattyPad
