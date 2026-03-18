@@ -26,6 +26,7 @@ interface SidebarProps {
   onMoveProjectToGroup?: (projectId: string, groupId: string | null) => void;
   onReorderProject?: (projectId: string, targetSortOrder: number) => void;
   onReorderThread?: (threadId: string, targetSortOrder: number) => void;
+  onLockAllProjects?: () => void;
 }
 
 export function Sidebar(props: SidebarProps): React.ReactElement {
@@ -108,14 +109,25 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
         >
           Workspace
         </div>
-        <button
-          type="button"
-          onClick={props.onCreateProject}
-          disabled={props.isBusy}
-          style={actionButtonStyle}
-        >
-          +
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={props.onLockAllProjects}
+            disabled={props.isBusy}
+            title="Lock all encrypted projects"
+            style={{ ...actionButtonStyle, padding: "4px 8px", fontSize: 14 }}
+          >
+            🔒
+          </button>
+          <button
+            type="button"
+            onClick={props.onCreateProject}
+            disabled={props.isBusy}
+            style={actionButtonStyle}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -273,6 +285,15 @@ function ProjectItem({ project, props, setContextMenu }: any) {
           </div>
         )}
         
+        {project.isEncrypted && (
+          <div
+            title={project.isLocked ? "Project is locked" : "Project is encrypted"}
+            style={{ fontSize: 12, color: project.isLocked ? "#f38ba8" : "#a6adc8", opacity: 0.8 }}
+          >
+            {project.isLocked ? "🔒" : "🔓"}
+          </div>
+        )}
+
         {!isEditingProject && (
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button

@@ -15,13 +15,16 @@ export function initializeSchema(db: Database): void {
     );
 
     CREATE TABLE IF NOT EXISTS projects (
-      id           TEXT    PRIMARY KEY NOT NULL,
-      name         TEXT    NOT NULL,
-      sort_order   INTEGER NOT NULL DEFAULT 0,
-      group_id     TEXT    REFERENCES project_groups(id) ON DELETE SET NULL,
-      is_collapsed INTEGER NOT NULL DEFAULT 0,
-      created_at   TEXT    NOT NULL,
-      updated_at   TEXT    NOT NULL
+      id              TEXT    PRIMARY KEY NOT NULL,
+      name            TEXT    NOT NULL,
+      sort_order      INTEGER NOT NULL DEFAULT 0,
+      group_id        TEXT    REFERENCES project_groups(id) ON DELETE SET NULL,
+      is_collapsed    INTEGER NOT NULL DEFAULT 0,
+      is_encrypted    INTEGER NOT NULL DEFAULT 0,
+      password_hash   TEXT,
+      encryption_salt TEXT,
+      created_at      TEXT    NOT NULL,
+      updated_at      TEXT    NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS chat_threads (
@@ -53,4 +56,7 @@ export function initializeSchema(db: Database): void {
   // Attempt to add new columns to existing projects table (will fail silently if they already exist)
   try { db.exec("ALTER TABLE projects ADD COLUMN group_id TEXT REFERENCES project_groups(id) ON DELETE SET NULL;"); } catch {}
   try { db.exec("ALTER TABLE projects ADD COLUMN is_collapsed INTEGER NOT NULL DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE projects ADD COLUMN is_encrypted INTEGER NOT NULL DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE projects ADD COLUMN password_hash TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE projects ADD COLUMN encryption_salt TEXT;"); } catch {}
 }

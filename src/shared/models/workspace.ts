@@ -21,6 +21,9 @@ export interface Project {
   sortOrder: number;
   groupId: string | null;
   isCollapsed: boolean;
+  isEncrypted: boolean;
+  passwordHash: string | null;
+  encryptionSalt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -21,6 +21,8 @@ import type {
   IpcError,
 } from "../../shared/contracts/workspace.js";
 import { DatabaseError, toDatabaseError } from "../database/sqlite.js";
+import { sessionKeys } from "./workspace-service.js";
+import { CryptoService } from "../../shared/crypto/crypto-service.js";
 
 export interface SendMessageInput {
   threadId: string;
@@ -61,10 +63,10 @@ function toIpcError(error: unknown): IpcError {
  * Validates and persists a new message in the given thread.
  * Returns the refreshed ActiveThreadDetail on success.
  */
-export function sendMessage(
+export async function sendMessage(
   db: Database,
   input: SendMessageInput
-): IpcResult<ActiveThreadDetail> {
+): Promise<IpcResult<ActiveThreadDetail>> {
   if (!input.threadId || input.threadId.trim() === "") {
     return {
       success: false,
@@ -93,12 +95,30 @@ export function sendMessage(
     : "user";
 
   try {
-    db.exec("BEGIN IMMEDIATE TRANSACTION");
-
     const thread = getThreadById(db, input.threadId);
     if (!thread) {
       throw new Error(`Thread not found: ${input.threadId}`);
     }
+
+    const project = getProjectById(db, thread.projectId);
+    const key = sessionKeys.get(thread.projectId);
+
+    let contentToStore = trimmedContent;
+    if (project?.isEncrypted) {
+      if (!key) {
+        return {
+          success: false,
+          error: {
+            code: "PROJECT_LOCKED",
+            message: "The project is locked. Please unlock it to send messages.",
+            recoverable: true,
+          },
+        };
+      }
+      contentToStore = await CryptoService.encrypt(trimmedContent, key);
+    }
+
+    db.exec("BEGIN IMMEDIATE TRANSACTION");
 
     const now = new Date().toISOString();
     const sequenceNumber = getNextSequenceNumber(db, input.threadId);
@@ -107,7 +127,7 @@ export function sendMessage(
       id: randomUUID(),
       threadId: input.threadId,
       role,
-      content: trimmedContent,
+      content: contentToStore,
       sequenceNumber,
       createdAt: now,
     };
@@ -123,11 +143,39 @@ export function sendMessage(
     const messages = getMessagesByThread(db, input.threadId);
     db.exec("COMMIT");
 
+    // Decrypt messages for view
+    const messageViews = await Promise.all(messages.map(async (m) => {
+      let content = m.content;
+      if (project?.isEncrypted && key) {
+        try {
+          content = await CryptoService.decrypt(m.content, key);
+        } catch (err) {
+          content = "[Encrypted Content]";
+        }
+      }
+      return {
+        ...messageToView(m),
+        content,
+      };
+    }));
+
+    let threadTitle = updatedThread.title;
+    if (project?.isEncrypted && key) {
+      try {
+        threadTitle = await CryptoService.decrypt(updatedThread.title, key);
+      } catch (err) {
+        threadTitle = "[Encrypted Content]";
+      }
+    }
+
     return {
       success: true,
       data: {
-        thread: threadToSummary(updatedThread),
-        messages: messages.map(messageToView),
+        thread: {
+          ...threadToSummary(updatedThread),
+          title: threadTitle,
+        },
+        messages: messageViews,
       },
     };
   } catch (error) {

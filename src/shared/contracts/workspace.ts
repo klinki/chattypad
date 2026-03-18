@@ -16,6 +16,8 @@ export interface ProjectSummary {
   sortOrder: number;
   groupId: string | null;
   isCollapsed: boolean;
+  isEncrypted: boolean;
+  isLocked: boolean;
 }
 
 export interface ThreadSummary {
@@ -58,6 +60,17 @@ export interface WindowFrameUpdateRequest extends WindowFrame {}
 
 export interface ProjectCreateRequest {
   name: string;
+  isEncrypted?: boolean;
+  password?: string;
+}
+
+export interface ProjectUnlockRequest {
+  projectId: string;
+  password: string;
+}
+
+export interface ProjectLockRequest {
+  projectId: string;
 }
 
 export interface ProjectUpdateRequest {
@@ -128,6 +141,9 @@ export const IPC_CHANNELS = {
   THREAD_REORDER: "thread:reorder",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
+  PROJECT_UNLOCK: "project:unlock",
+  PROJECT_LOCK: "project:lock",
+  PROJECT_LOCK_ALL: "project:lock-all",
   WINDOW_GET_FRAME: "window:get-frame",
   WINDOW_SET_FRAME: "window:set-frame",
   WINDOW_MINIMIZE: "window:minimize",

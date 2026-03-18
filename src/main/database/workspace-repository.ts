@@ -23,6 +23,9 @@ interface ProjectRow {
   sort_order: number;
   group_id: string | null;
   is_collapsed: number;
+  is_encrypted: number;
+  password_hash: string | null;
+  encryption_salt: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +68,9 @@ function rowToProject(row: ProjectRow): Project {
     sortOrder: row.sort_order,
     groupId: row.group_id ?? null,
     isCollapsed: row.is_collapsed === 1,
+    isEncrypted: row.is_encrypted === 1,
+    passwordHash: row.password_hash,
+    encryptionSalt: row.encryption_salt,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -160,14 +166,17 @@ export function getProjectById(db: Database, id: string): Project | null {
 
 export function insertProject(db: Database, project: Project): void {
   db.run(
-    `INSERT INTO projects (id, name, sort_order, group_id, is_collapsed, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO projects (id, name, sort_order, group_id, is_collapsed, is_encrypted, password_hash, encryption_salt, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       project.id,
       project.name,
       project.sortOrder,
       project.groupId,
       project.isCollapsed ? 1 : 0,
+      project.isEncrypted ? 1 : 0,
+      project.passwordHash,
+      project.encryptionSalt,
       project.createdAt,
       project.updatedAt,
     ]
@@ -347,6 +356,8 @@ export function projectToSummary(p: Project): ProjectSummary {
     sortOrder: p.sortOrder,
     groupId: p.groupId,
     isCollapsed: p.isCollapsed,
+    isEncrypted: p.isEncrypted,
+    isLocked: p.isEncrypted, // Default to locked if encrypted
   };
 }
 

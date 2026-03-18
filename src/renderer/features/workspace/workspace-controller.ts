@@ -46,10 +46,10 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     }
   }
 
-  async function createProject(name: string): Promise<string | null> {
+  async function createProject(name: string, isEncrypted?: boolean, password?: string): Promise<string | null> {
     const currentProjects = new Set(workspaceStore.getState().snapshot?.projects.map(p => p.id) ?? []);
     workspaceStore.setLoading(true);
-    const result = await client.createProject(name);
+    const result = await client.createProject(name, isEncrypted, password);
     if (result.success) {
       await applySnapshot(result.data);
       const newProject = result.data.projects.find(p => !currentProjects.has(p.id));
@@ -143,6 +143,48 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return false;
   }
 
+  async function unlockProject(projectId: string, password: string): Promise<boolean> {
+    const startTime = performance.now();
+    workspaceStore.setLoading(true);
+    const result = await client.unlockProject(projectId, password);
+    if (result.success) {
+      // In a real app, we'd derive the key here and store it in workspaceStore
+      // For this prototype, we'll simulate a key
+      const key = await crypto.subtle.importKey(
+        "raw",
+        new Uint8Array(32),
+        "AES-GCM",
+        false,
+        ["encrypt", "decrypt"]
+      );
+      workspaceStore.setUnlockedKey(projectId, key);
+      
+      // Re-open active thread if it was in this project
+      const state = workspaceStore.getState();
+      if (state.snapshot?.activeThreadId) {
+        await openThread(state.snapshot.activeThreadId);
+      } else {
+        workspaceStore.setLoading(false);
+      }
+      const endTime = performance.now();
+      console.log(`[performance] Project unlock took ${(endTime - startTime).toFixed(2)}ms`);
+      return true;
+    }
+
+    workspaceStore.setError(result.error);
+    return false;
+  }
+
+  async function lockProject(projectId: string): Promise<void> {
+    await client.lockProject(projectId);
+    workspaceStore.lockProject(projectId);
+  }
+
+  async function lockAllProjects(): Promise<void> {
+    await client.lockAllProjects();
+    workspaceStore.lockAllProjects();
+  }
+
   async function sendMessage(threadId: string, content: string): Promise<void> {
     const requestId = ++latestSendRequestId;
     const targetThreadId = threadId;
@@ -171,6 +213,9 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     updateThread,
     reorderThread,
     openThread,
+    unlockProject,
+    lockProject,
+    lockAllProjects,
     sendMessage,
   };
 }

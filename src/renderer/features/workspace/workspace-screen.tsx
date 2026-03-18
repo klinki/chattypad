@@ -17,6 +17,7 @@ import { ThreadHeader } from "../../components/thread-header.js";
 import { MessageHistory } from "../../components/message-history.js";
 import { Header } from "../../components/header.js";
 import { MessageComposer } from "../../components/message-composer.js";
+import { LockScreen } from "../../components/lock-screen.js";
 import { WindowResizeHandles } from "../../components/window-resize-handles.js";
 import type { WorkspaceState } from "../../state/workspace-store.js";
 
@@ -46,6 +47,7 @@ function getWindowMode(): "native" | "frameless" {
 
 type ProjectDialogState =
   | { mode: "closed" }
+  | { mode: "create" }
   | { mode: "delete"; project: ProjectSummary };
 
 export function WorkspaceScreen(): React.ReactElement {
@@ -55,12 +57,44 @@ export function WorkspaceScreen(): React.ReactElement {
     mode: "closed",
   });
   const [projectName, setProjectName] = useState("");
+  const [isEncrypted, setIsEncrypted] = useState(false);
+  const [password, setPassword] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = workspaceStore.subscribe(setState);
     controller.loadWorkspace();
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+    let timeoutId: Timer;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const hasUnlockedProjects = Object.keys(workspaceStore.getState().unlockedKeys).length > 0;
+        if (hasUnlockedProjects) {
+          console.log("[inactivity] 5 minutes passed, locking all projects");
+          controller.lockAllProjects();
+        }
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    const activityEvents = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -97,10 +131,10 @@ export function WorkspaceScreen(): React.ReactElement {
   }, [state.activeThread, state.composeText]);
 
   const handleCreateProject = useCallback(async () => {
-    const newId = await controller.createProject("New Project");
-    if (newId) {
-      setEditingItemId(newId);
-    }
+    setProjectDialog({ mode: "create" });
+    setProjectName("");
+    setIsEncrypted(false);
+    setPassword("");
   }, []);
 
   const handleUpdateProject = useCallback((id: string, name?: string, isCollapsed?: boolean) => {
@@ -134,6 +168,10 @@ export function WorkspaceScreen(): React.ReactElement {
     }
   }, []);
 
+  const handleUnlockProject = useCallback((projectId: string, password: string) => {
+    controller.unlockProject(projectId, password);
+  }, []);
+
   const closeProjectDialog = useCallback(() => {
     if (!state.isLoading) {
       setProjectDialog({ mode: "closed" });
@@ -141,12 +179,14 @@ export function WorkspaceScreen(): React.ReactElement {
   }, [state.isLoading]);
 
   const confirmCreateProject = useCallback(async () => {
-    const didCreate = await controller.createProject(projectName);
+    const didCreate = await controller.createProject(projectName, isEncrypted, password);
     if (didCreate) {
       setProjectDialog({ mode: "closed" });
       setProjectName("");
+      setIsEncrypted(false);
+      setPassword("");
     }
-  }, [projectName]);
+  }, [projectName, isEncrypted, password]);
 
   const confirmDeleteProject = useCallback(async () => {
     if (projectDialog.mode !== "delete") {
@@ -158,6 +198,10 @@ export function WorkspaceScreen(): React.ReactElement {
       setProjectDialog({ mode: "closed" });
     }
   }, [projectDialog]);
+
+  const handleLockAllProjects = useCallback(() => {
+    controller.lockAllProjects();
+  }, []);
 
   const sidebar = (
     <Sidebar
@@ -177,23 +221,41 @@ export function WorkspaceScreen(): React.ReactElement {
       onMoveProjectToGroup={handleMoveProjectToGroup}
       onReorderProject={handleReorderProject}
       onReorderThread={handleReorderThread}
+      onLockAllProjects={handleLockAllProjects}
     />
   );
 
   const hasProjects = (state.snapshot?.projects.length ?? 0) > 0;
 
+  const activeProject = state.snapshot?.projects.find(
+    (p) =>
+      p.id === state.activeThread?.thread.projectId ||
+      (state.snapshot?.activeThreadId &&
+        state.snapshot.threadsByProject[p.id]?.some((t) => t.id === state.snapshot?.activeThreadId))
+  );
+
+  const isLocked = activeProject?.isEncrypted && !state.unlockedKeys[activeProject.id];
+
   const mainContent = state.activeThread ? (
-    <>
-      <ThreadHeader thread={state.activeThread.thread} />
-      <MessageHistory messages={state.activeThread.messages} />
-      <MessageComposer
-        value={state.composeText}
-        onChange={(text) => workspaceStore.setComposeText(text)}
-        onSend={handleSend}
-        sendError={state.sendError}
-        disabled={state.isLoading}
+    isLocked ? (
+      <LockScreen
+        projectName={activeProject?.name ?? "Project"}
+        isBusy={state.isLoading}
+        onUnlock={(password) => handleUnlockProject(activeProject!.id, password)}
       />
-    </>
+    ) : (
+      <>
+        <ThreadHeader thread={state.activeThread.thread} />
+        <MessageHistory messages={state.activeThread.messages} />
+        <MessageComposer
+          value={state.composeText}
+          onChange={(text) => workspaceStore.setComposeText(text)}
+          onSend={handleSend}
+          sendError={state.sendError}
+          disabled={state.isLoading}
+        />
+      </>
+    )
   ) : !hasProjects && !state.isLoading && !state.error ? (
     <WorkspaceEmptyState />
   ) : (
@@ -214,7 +276,11 @@ export function WorkspaceScreen(): React.ReactElement {
                 dialog={projectDialog}
                 projectName={projectName}
                 isBusy={state.isLoading}
+                isEncrypted={isEncrypted}
+                password={password}
                 onProjectNameChange={setProjectName}
+                onIsEncryptedChange={setIsEncrypted}
+                onPasswordChange={setPassword}
                 onClose={closeProjectDialog}
                 onConfirmCreate={confirmCreateProject}
                 onConfirmDelete={confirmDeleteProject}
@@ -233,7 +299,11 @@ interface ProjectDialogProps {
   dialog: ProjectDialogState;
   projectName: string;
   isBusy: boolean;
+  isEncrypted: boolean;
+  password?: string;
   onProjectNameChange: (value: string) => void;
+  onIsEncryptedChange: (value: boolean) => void;
+  onPasswordChange: (value: string) => void;
   onClose: () => void;
   onConfirmCreate: () => void;
   onConfirmDelete: () => void;
@@ -243,7 +313,11 @@ function ProjectDialog({
   dialog,
   projectName,
   isBusy,
+  isEncrypted,
+  password,
   onProjectNameChange,
+  onIsEncryptedChange,
+  onPasswordChange,
   onClose,
   onConfirmCreate,
   onConfirmDelete,
@@ -252,10 +326,10 @@ function ProjectDialog({
     return null;
   }
 
-  const isCreate = false;
-  const title = "Delete project";
-  const confirmLabel = "Delete project";
-  const canSubmit = !isBusy;
+  const isCreate = dialog.mode === "create";
+  const title = isCreate ? "Create new project" : "Delete project";
+  const confirmLabel = isCreate ? "Create project" : "Delete project";
+  const canSubmit = !isBusy && projectName.trim() !== "" && (!isEncrypted || (password?.length ?? 0) > 0);
 
   return (
     <div
@@ -269,19 +343,57 @@ function ProjectDialog({
         <h2 id="project-dialog-title" style={dialogTitleStyle}>
           {title}
         </h2>
-        <p style={dialogCopyStyle}>
-          Delete <strong>{dialog.project.name}</strong>? All threads and messages in this project
-          will be removed.
-        </p>
+        {isCreate ? (
+          <>
+            <input
+              type="text"
+              placeholder="Project name"
+              value={projectName}
+              onChange={(e) => onProjectNameChange(e.target.value)}
+              style={dialogInputStyle}
+              autoFocus
+              disabled={isBusy}
+            />
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, color: "#cdd6f4", fontSize: 14, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isEncrypted}
+                onChange={(e) => onIsEncryptedChange(e.target.checked)}
+                disabled={isBusy}
+              />
+              Encrypted Project
+            </label>
+            {isEncrypted && (
+              <>
+                <input
+                  type="password"
+                  placeholder="Encryption password"
+                  value={password}
+                  onChange={(e) => onPasswordChange(e.target.value)}
+                  style={dialogInputStyle}
+                  disabled={isBusy}
+                />
+                <p style={{ ...dialogCopyStyle, color: "#f38ba8", fontSize: 12, fontWeight: 600 }}>
+                  ⚠️ DATA IS IRRECOVERABLE: If you lose this password, your notes cannot be decrypted.
+                </p>
+              </>
+            )}
+          </>
+        ) : (
+          <p style={dialogCopyStyle}>
+            Delete <strong>{dialog.project.name}</strong>? All threads and messages in this project
+            will be removed.
+          </p>
+        )}
         <div style={dialogActionsStyle}>
           <button type="button" onClick={onClose} disabled={isBusy} style={dialogSecondaryButtonStyle}>
             Cancel
           </button>
           <button
             type="button"
-            onClick={onConfirmDelete}
+            onClick={isCreate ? onConfirmCreate : onConfirmDelete}
             disabled={!canSubmit}
-            style={dialogDangerButtonStyle}
+            style={isCreate ? dialogPrimaryButtonStyle : dialogDangerButtonStyle}
           >
             {confirmLabel}
           </button>

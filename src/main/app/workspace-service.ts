@@ -35,6 +35,9 @@ import type {
   IpcResult,
 } from "../../shared/contracts/workspace.js";
 import { withIpcError } from "./ipc-error.js";
+import { CryptoService } from "../../shared/crypto/crypto-service.js";
+
+export const sessionKeys = new Map<string, CryptoKey>();
 
 function getInitialActiveThreadId(db: Database, projectIds: string[]): string | null {
   for (const projectId of projectIds) {
@@ -91,10 +94,12 @@ export function loadWorkspace(db: Database): IpcResult<WorkspaceSnapshot> {
   });
 }
 
-export function createProject(
+export async function createProject(
   db: Database,
-  name: string
-): IpcResult<WorkspaceSnapshot> {
+  name: string,
+  isEncrypted: boolean = false,
+  password?: string
+): Promise<IpcResult<WorkspaceSnapshot>> {
   const trimmedName = name.trim();
   if (trimmedName === "") {
     return {
@@ -107,14 +112,39 @@ export function createProject(
     };
   }
 
-  return withIpcError(() => {
+  if (isEncrypted && !password) {
+    return {
+      success: false,
+      error: {
+        code: "PASSWORD_REQUIRED",
+        message: "Password is required for encrypted projects.",
+        recoverable: true,
+      },
+    };
+  }
+
+  return withIpcError(async () => {
     const now = new Date().toISOString();
+    let passwordHash: string | null = null;
+    let encryptionSalt: string | null = null;
+
+    if (isEncrypted && password) {
+      // @ts-ignore - Bun.password is available in Bun environment
+      passwordHash = await Bun.password.hash(password);
+      // We use a separate salt for PBKDF2 key derivation (handled in CryptoService)
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      encryptionSalt = btoa(String.fromCharCode(...salt));
+    }
+
     const project: Project = {
       id: crypto.randomUUID(),
       name: trimmedName,
       sortOrder: getNextProjectSortOrder(db),
       groupId: null,
       isCollapsed: false,
+      isEncrypted,
+      passwordHash,
+      encryptionSalt,
       createdAt: now,
       updatedAt: now,
     };
@@ -163,10 +193,10 @@ export function removeProject(
   });
 }
 
-export function createThread(
+export async function createThread(
   db: Database,
   projectId: string
-): IpcResult<WorkspaceSnapshot> {
+): Promise<IpcResult<WorkspaceSnapshot>> {
   if (!projectId || projectId.trim() === "") {
     return {
       success: false,
@@ -190,12 +220,22 @@ export function createThread(
     };
   }
 
-  return withIpcError(() => {
+  return withIpcError(async () => {
     const now = new Date().toISOString();
+    let title = "New thread";
+    
+    if (existingProject.isEncrypted) {
+      const key = sessionKeys.get(projectId);
+      if (!key) {
+        throw new Error("Project is locked.");
+      }
+      title = await CryptoService.encrypt(title, key);
+    }
+
     const thread: ChatThread = {
       id: crypto.randomUUID(),
       projectId,
-      title: "New thread",
+      title,
       sortOrder: getNextThreadSortOrder(db, projectId),
       createdAt: now,
       updatedAt: now,
@@ -229,16 +269,49 @@ export function openThread(
     };
   }
 
-  return withIpcError(() => {
+  return withIpcError(async () => {
     const thread = getThreadById(db, threadId);
     if (!thread) {
       throw new Error(`Thread not found: ${threadId}`);
     }
 
+    const project = getProjectById(db, thread.projectId);
+    const key = sessionKeys.get(thread.projectId);
+
     const messages = getMessagesByThread(db, threadId);
+    
+    let threadTitle = thread.title;
+    if (project?.isEncrypted && key) {
+      try {
+        threadTitle = await CryptoService.decrypt(thread.title, key);
+      } catch (err) {
+        console.error("Failed to decrypt thread title", err);
+        threadTitle = "[Encrypted Content]";
+      }
+    }
+
+    const messageViews = await Promise.all(messages.map(async (m) => {
+      let content = m.content;
+      if (project?.isEncrypted && key) {
+        try {
+          content = await CryptoService.decrypt(m.content, key);
+        } catch (err) {
+          console.error("Failed to decrypt message content", err);
+          content = "[Encrypted Content]";
+        }
+      }
+      return {
+        ...messageToView(m),
+        content,
+      };
+    }));
+
     return {
-      thread: threadToSummary(thread),
-      messages: messages.map(messageToView),
+      thread: {
+        ...threadToSummary(thread),
+        title: threadTitle,
+      },
+      messages: messageViews,
     };
   }, {
     fallbackCode: "THREAD_OPEN_FAILED",
@@ -349,16 +422,61 @@ export function reorderThread(
   });
 }
 
-export function updateThread(
+export async function unlockProject(
   db: Database,
-  threadId: string,
-  title: string
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
-    updateThreadTitle(db, threadId, title);
-    return buildWorkspaceSnapshot(db);
+  projectId: string,
+  password: string
+): Promise<IpcResult<void>> {
+  return withIpcError(async () => {
+    const project = getProjectById(db, projectId);
+    if (!project || !project.isEncrypted || !project.passwordHash) {
+      return {
+        success: false,
+        error: {
+          code: "PROJECT_NOT_ENCRYPTED",
+          message: "The project is not encrypted.",
+          recoverable: true,
+        },
+      };
+    }
+
+    // @ts-ignore - Bun.password is available
+    const isMatch = await Bun.password.verify(password, project.passwordHash);
+    if (!isMatch) {
+      return {
+        success: false,
+        error: {
+          code: "INVALID_PASSWORD",
+          message: "Incorrect password.",
+          recoverable: true,
+        },
+      };
+    }
+
+    if (project.encryptionSalt) {
+      const salt = CryptoService.base64ToUint8Array(project.encryptionSalt);
+      const key = await CryptoService.deriveKey(password, salt);
+      sessionKeys.set(projectId, key);
+    }
+
+    return { success: true, data: undefined };
   }, {
-    fallbackCode: "THREAD_UPDATE_FAILED",
-    fallbackMessage: "The thread could not be updated.",
+    fallbackCode: "PROJECT_UNLOCK_FAILED",
+    fallbackMessage: "Failed to unlock project.",
   });
+}
+
+export function lockProject(
+  _db: Database,
+  projectId: string
+): IpcResult<void> {
+  sessionKeys.delete(projectId);
+  return { success: true, data: undefined };
+}
+
+export function lockAllProjects(
+  _db: Database
+): IpcResult<void> {
+  sessionKeys.clear();
+  return { success: true, data: undefined };
 }

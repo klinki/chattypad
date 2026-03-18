@@ -24,7 +24,10 @@ import type {
 
 export interface WorkspaceIpcClient {
   loadWorkspace(): Promise<IpcResult<WorkspaceSnapshot>>;
-  createProject(name: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  createProject(name: string, isEncrypted?: boolean, password?: string): Promise<IpcResult<WorkspaceSnapshot>>;
+  unlockProject(projectId: string, password: string): Promise<IpcResult<void>>;
+  lockProject(projectId: string): Promise<IpcResult<void>>;
+  lockAllProjects(): Promise<IpcResult<void>>;
   deleteProject(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
   updateProject(projectId: string, name?: string, isCollapsed?: boolean): Promise<IpcResult<WorkspaceSnapshot>>;
   createThread(projectId: string): Promise<IpcResult<WorkspaceSnapshot>>;
@@ -150,8 +153,14 @@ function invokeMessage(channel: string, payload?: any): void {
 
 export const workspaceIpcClient: WorkspaceIpcClient = {
   loadWorkspace: () => invokeIpc(IPC_CHANNELS.WORKSPACE_LOAD),
-  createProject: (name: ProjectCreateRequest["name"]) =>
-    invokeIpc(IPC_CHANNELS.PROJECT_CREATE, { name }),
+  createProject: (name, isEncrypted, password) =>
+    invokeIpc(IPC_CHANNELS.PROJECT_CREATE, { name, isEncrypted, password }),
+  unlockProject: (projectId, password) =>
+    invokeIpc(IPC_CHANNELS.PROJECT_UNLOCK, { projectId, password }),
+  lockProject: (projectId) =>
+    invokeIpc(IPC_CHANNELS.PROJECT_LOCK, { projectId }),
+  lockAllProjects: () =>
+    invokeIpc(IPC_CHANNELS.PROJECT_LOCK_ALL),
   deleteProject: (projectId: ProjectDeleteRequest["projectId"]) =>
     invokeIpc(IPC_CHANNELS.PROJECT_DELETE, { projectId }),
   createThread: (projectId: ThreadCreateRequest["projectId"]) =>

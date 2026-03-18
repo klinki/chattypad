@@ -16,6 +16,7 @@ export interface WorkspaceState {
   error: IpcError | null;
   composeText: string;
   sendError: IpcError | null;
+  unlockedKeys: Record<string, CryptoKey>;
 }
 
 type Listener = (state: WorkspaceState) => void;
@@ -27,6 +28,7 @@ const initialState: WorkspaceState = {
   error: null,
   composeText: "",
   sendError: null,
+  unlockedKeys: {},
 };
 
 let state: WorkspaceState = { ...initialState };
@@ -114,6 +116,28 @@ export const workspaceStore = {
       snapshot: updateActiveThreadSummary(detail) ?? state.snapshot,
       composeText: "",
       sendError: null,
+    });
+  },
+
+  setUnlockedKey(projectId: string, key: CryptoKey): void {
+    setState({
+      unlockedKeys: { ...state.unlockedKeys, [projectId]: key },
+    });
+  },
+
+  lockProject(projectId: string): void {
+    const { [projectId]: _, ...remainingKeys } = state.unlockedKeys;
+    setState({
+      unlockedKeys: remainingKeys,
+      // If the active thread is in this project, clear it
+      activeThread: state.activeThread?.thread.projectId === projectId ? null : state.activeThread,
+    });
+  },
+
+  lockAllProjects(): void {
+    setState({
+      unlockedKeys: {},
+      activeThread: null,
     });
   },
 

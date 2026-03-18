@@ -53,7 +53,7 @@ const debugIpcEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
 
 export interface WorkspaceHandlers {
     handleWorkspaceLoad: () => IpcResult<WorkspaceSnapshot>;
-  handleProjectCreate: (name: string) => IpcResult<WorkspaceSnapshot>;
+  handleProjectCreate: (name: string, isEncrypted?: boolean, password?: string) => Promise<IpcResult<WorkspaceSnapshot>>;
   handleProjectDelete: (projectId: string) => IpcResult<WorkspaceSnapshot>;
   handleProjectUpdate: (projectId: string, name?: string, isCollapsed?: boolean) => IpcResult<WorkspaceSnapshot>;
   handleProjectGroupCreate: (name: string) => IpcResult<WorkspaceSnapshot>;
@@ -61,20 +61,23 @@ export interface WorkspaceHandlers {
   handleProjectGroupUpdate: (groupId: string, name: string) => IpcResult<WorkspaceSnapshot>;
   handleProjectMoveToGroup: (projectId: string, groupId: string | null) => IpcResult<WorkspaceSnapshot>;
   handleProjectReorder: (projectId: string, targetSortOrder: number) => IpcResult<WorkspaceSnapshot>;
-  handleThreadCreate: (projectId: string) => IpcResult<WorkspaceSnapshot>;
+  handleThreadCreate: (projectId: string) => Promise<IpcResult<WorkspaceSnapshot>>;
   handleThreadUpdate: (threadId: string, title: string) => IpcResult<WorkspaceSnapshot>;
   handleThreadReorder: (threadId: string, targetSortOrder: number) => IpcResult<WorkspaceSnapshot>;
   handleThreadOpen: (threadId: string) => IpcResult<ActiveThreadDetail>;
+  handleProjectUnlock: (projectId: string, password: string) => Promise<IpcResult<void>>;
+  handleProjectLock: (projectId: string) => IpcResult<void>;
+  handleProjectLockAll: () => IpcResult<void>;
   handleMessageSend: (
     threadId: string,
     content: string,
     role: string
-  ) => IpcResult<ActiveThreadDetail>;
+  ) => Promise<IpcResult<ActiveThreadDetail>>;
 }
 
 export interface WorkspaceRpcRequestHandlers {
     [CHANNELS.WORKSPACE_LOAD]: () => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_CREATE]: (payload?: ProjectCreateRequest) => IpcResult<WorkspaceSnapshot>;
+  [CHANNELS.PROJECT_CREATE]: (payload?: ProjectCreateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.PROJECT_DELETE]: (payload?: ProjectDeleteRequest) => IpcResult<WorkspaceSnapshot>;
   [CHANNELS.PROJECT_UPDATE]: (payload?: ProjectUpdateRequest) => IpcResult<WorkspaceSnapshot>;
   [CHANNELS.PROJECT_GROUP_CREATE]: (payload?: ProjectGroupCreateRequest) => IpcResult<WorkspaceSnapshot>;
@@ -87,10 +90,10 @@ export interface WorkspaceRpcRequestHandlers {
   [CHANNELS.THREAD_REORDER]: (payload?: ReorderRequest) => IpcResult<WorkspaceSnapshot>;
   [CHANNELS.THREAD_OPEN]: (
     payload?: ThreadOpenRequest
-  ) => IpcResult<ActiveThreadDetail>;
+  ) => Promise<IpcResult<ActiveThreadDetail>>;
   [CHANNELS.MESSAGE_SEND]: (
     payload?: MessageSendRequest
-  ) => IpcResult<ActiveThreadDetail>;
+  ) => Promise<IpcResult<ActiveThreadDetail>>;
 }
 
 /**
@@ -100,7 +103,7 @@ export interface WorkspaceRpcRequestHandlers {
 export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
     return {
     handleWorkspaceLoad: () => loadWorkspace(db),
-    handleProjectCreate: (name: string) => createProject(db, name),
+    handleProjectCreate: (name: string, isEncrypted?: boolean, password?: string) => createProject(db, name, isEncrypted, password),
     handleProjectDelete: (projectId: string) => removeProject(db, projectId),
     handleProjectUpdate: (projectId: string, name?: string, isCollapsed?: boolean) => {
       const updates: { name?: string; isCollapsed?: boolean } = {};
@@ -117,6 +120,9 @@ export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
     handleThreadUpdate: (threadId: string, title: string) => updateThread(db, threadId, title),
     handleThreadReorder: (threadId: string, targetSortOrder: number) => reorderThread(db, threadId, targetSortOrder),
     handleThreadOpen: (threadId: string) => openThread(db, threadId),
+    handleProjectUnlock: (projectId: string, password: string) => unlockProject(db, projectId, password),
+    handleProjectLock: (projectId: string) => Promise.resolve(lockProject(db, projectId)),
+    handleProjectLockAll: () => lockAllProjects(db),
     handleMessageSend: (threadId: string, content: string, role: string) =>
       sendMessage(db, { threadId, content, role }),
   };
@@ -167,6 +173,8 @@ function normalizeProjectCreateRequest(
 ): ProjectCreateRequest {
   return {
     name: typeof payload?.name === "string" ? payload.name : "",
+    isEncrypted: typeof payload?.isEncrypted === "boolean" ? payload.isEncrypted : false,
+    password: typeof payload?.password === "string" ? payload.password : undefined,
   };
 }
 
@@ -218,10 +226,10 @@ export function createWorkspaceRpcRequestHandlers(
       );
       return result;
     },
-    [CHANNELS.PROJECT_CREATE]: (payload) => {
+    [CHANNELS.PROJECT_CREATE]: async (payload) => {
       const request = normalizeProjectCreateRequest(payload);
       logRequest(CHANNELS.PROJECT_CREATE, `request name=${request.name}`);
-      const result = handlers.handleProjectCreate(request.name);
+      const result = await handlers.handleProjectCreate(request.name, request.isEncrypted, request.password);
       logRequest(
         CHANNELS.PROJECT_CREATE,
         result.success ? "success" : `error ${result.error.code}`
@@ -297,27 +305,45 @@ export function createWorkspaceRpcRequestHandlers(
       logRequest(CHANNELS.THREAD_REORDER, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.THREAD_CREATE]: (payload) => {
+    [CHANNELS.THREAD_CREATE]: async (payload) => {
       const request = normalizeThreadCreateRequest(payload);
       logRequest(CHANNELS.THREAD_CREATE, `request projectId=${request.projectId}`);
-      const result = handlers.handleThreadCreate(request.projectId);
+      const result = await handlers.handleThreadCreate(request.projectId);
       logRequest(
         CHANNELS.THREAD_CREATE,
         result.success ? "success" : `error ${result.error.code}`
       );
       return result;
     },
-    [CHANNELS.THREAD_OPEN]: (payload) => {
+    [CHANNELS.THREAD_OPEN]: async (payload) => {
       const request = normalizeThreadOpenRequest(payload);
       logRequest(CHANNELS.THREAD_OPEN, `request threadId=${request.threadId}`);
-      const result = handlers.handleThreadOpen(request.threadId);
+      const result = await handlers.handleThreadOpen(request.threadId);
       logRequest(
         CHANNELS.THREAD_OPEN,
         result.success ? "success" : `error ${result.error.code}`
       );
       return result;
     },
-    [CHANNELS.MESSAGE_SEND]: (payload) => {
+    [CHANNELS.PROJECT_UNLOCK]: async (payload) => {
+      logRequest(CHANNELS.PROJECT_UNLOCK, `request projectId=${payload?.projectId}`);
+      const result = await handlers.handleProjectUnlock(payload?.projectId ?? "", payload?.password ?? "");
+      logRequest(CHANNELS.PROJECT_UNLOCK, result.success ? "success" : `error ${result.error.code}`);
+      return result;
+    },
+    [CHANNELS.PROJECT_LOCK]: async (payload) => {
+      logRequest(CHANNELS.PROJECT_LOCK, `request projectId=${payload?.projectId}`);
+      const result = await handlers.handleProjectLock(payload?.projectId ?? "");
+      logRequest(CHANNELS.PROJECT_LOCK, result.success ? "success" : `error ${result.error.code}`);
+      return result;
+    },
+    [CHANNELS.PROJECT_LOCK_ALL]: () => {
+      logRequest(CHANNELS.PROJECT_LOCK_ALL, "request");
+      const result = handlers.handleProjectLockAll();
+      logRequest(CHANNELS.PROJECT_LOCK_ALL, result.success ? "success" : `error ${result.error.code}`);
+      return result;
+    },
+    [CHANNELS.MESSAGE_SEND]: async (payload) => {
       const request = {
         threadId: typeof payload?.threadId === "string" ? payload.threadId : "",
         content: typeof payload?.content === "string" ? payload.content : "",
@@ -325,7 +351,7 @@ export function createWorkspaceRpcRequestHandlers(
       };
 
       logRequest(CHANNELS.MESSAGE_SEND, `request threadId=${request.threadId}`);
-      const result = handlers.handleMessageSend(
+      const result = await handlers.handleMessageSend(
         request.threadId,
         request.content,
         request.role
