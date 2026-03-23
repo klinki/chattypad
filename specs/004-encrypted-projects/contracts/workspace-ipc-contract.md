@@ -6,7 +6,7 @@ This contract defines the IPC updates needed to support encrypted projects in Ch
 ## Modified Shared Types
 
 ### `ProjectSummary`
-Added `isEncrypted` and `isLocked` flags.
+Added `isEncrypted` and `isLocked` flags. When `isLocked` is `true` for an encrypted project, the renderer MUST hide thread children behind a collapsed tree state until unlock succeeds.
 ```typescript
 export interface ProjectSummary {
   id: string;

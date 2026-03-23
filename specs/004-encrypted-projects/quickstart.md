@@ -13,10 +13,11 @@
 
 ## Step 2: Unlock and View Content
 1.  Click the newly created encrypted project in the sidebar.
-2.  Observe that the main content area shows a **Project is Locked** message with a password field.
-3.  Enter an incorrect password and click **Unlock**. Observe the error message.
-4.  Enter the correct password and click **Unlock**.
-5.  Observe that the project content (empty for now) becomes accessible.
+2.  Observe that the project remains collapsed in the sidebar tree while locked and that its expand toggle cannot be used.
+3.  Observe that the main content area shows a **Project is Locked** message with a password field.
+4.  Enter an incorrect password and click **Unlock**. Observe the error message.
+5.  Enter the correct password and click **Unlock**.
+6.  Observe that the project content (empty for now) becomes accessible and the project can be expanded again in the sidebar.
 
 ## Step 3: Verify Security
 1.  Add a new thread and some messages to the encrypted project.

@@ -35,6 +35,7 @@ As a user with an encrypted project, I want to be prompted for a password when I
 1. **Given** an encrypted project exists and is currently locked, **When** I click on it in the sidebar, **Then** I am presented with a password entry field.
 2. **Given** a password prompt for an encrypted project, **When** I enter the correct password, **Then** the project content (threads and messages) becomes visible and accessible.
 3. **Given** a password prompt for an encrypted project, **When** I enter an incorrect password, **Then** I am shown an error message and the content remains hidden.
+4. **Given** an encrypted project is locked, **When** it is shown in the sidebar tree, **Then** its thread list is forced collapsed and cannot be expanded until the project is unlocked.
 
 ---
 
@@ -70,6 +71,7 @@ As a user, I want my encrypted projects to automatically lock when I close the a
 - **FR-005**: System MUST provide a visual indicator (e.g., a lock icon) in the sidebar for encrypted projects.
 - **FR-006**: System MUST ensure that encrypted content is unreadable in the database file without the decryption key derived from the user's password.
 - **FR-007**: System MUST provide a "Lock All" action to immediately re-secure all opened encrypted projects.
+- **FR-008**: System MUST render locked encrypted projects as collapsed in the sidebar tree and MUST prevent expansion until the project is unlocked.
 
 ### Key Entities *(include if feature involves data)*
 

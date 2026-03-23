@@ -3,6 +3,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ContextMenu } from "./context-menu.js";
+import { isProjectTreeCollapsed, isProjectTreeLocked } from "./sidebar-tree-state.js";
 import type {
   ProjectSummary,
   ThreadSummary,
@@ -163,7 +164,9 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
 
 function ProjectItem({ project, props, setContextMenu }: any) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: `proj-${project.id}` });
-  
+  const isTreeLocked = isProjectTreeLocked(project);
+  const isTreeCollapsed = isProjectTreeCollapsed(project);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -221,23 +224,29 @@ function ProjectItem({ project, props, setContextMenu }: any) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+            if (isTreeLocked) {
+              return;
+            }
             props.onUpdateProject(project.id, undefined, !project.isCollapsed);
           }}
           onPointerDown={(e) => e.stopPropagation()}
+          disabled={isTreeLocked}
+          title={isTreeLocked ? "Unlock project to expand threads" : undefined}
           style={{
             background: "transparent",
             border: "none",
             color: "#6c7086",
-            cursor: "pointer",
+            cursor: isTreeLocked ? "not-allowed" : "pointer",
+            opacity: isTreeLocked ? 0.55 : 1,
             fontSize: 10,
             padding: "2px 4px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transform: project.isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+            transform: isTreeCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
             transition: "transform 0.15s ease",
           }}
-          aria-label={project.isCollapsed ? "Expand" : "Collapse"}
+          aria-label={isTreeCollapsed ? "Expand" : "Collapse"}
         >
           ▼
         </button>
@@ -310,7 +319,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
           </div>
         )}
       </div>
-      {!project.isCollapsed && (
+      {!isTreeCollapsed && (
         threads.length === 0 ? (
           <div
             style={{
