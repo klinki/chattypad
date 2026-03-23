@@ -32,7 +32,7 @@
 - `npm run lint` ✅
 
 ## Outcome
-- Local verification passed. Waiting for user confirmation in the running app.
+- Fixed. User confirmed in the desktop app on 2026-03-23 that the sidebar lock icon now opens the unlock prompt and the project unlocks successfully.
 
 ## Remaining Gaps
-- Need user confirmation that clicking the sidebar lock icon opens the password prompt and unlocks the project successfully.
+- None recorded.
