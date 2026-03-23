@@ -1,0 +1,33 @@
+src/renderer/features/workspace/workspace-screen.tsx
+  f67a4a18a58d6341 53-56,67-68,177-181,184-186,189-191,194,196-197,200,245,271-274,318-331,358-359,361,363,365,460,463,465-474,479,485,490-491,493-512,519,521,523,530
+src/renderer/components/sidebar.tsx
+  f67a4a18a58d6341 25,299-329
+src/renderer/state/workspace-store.ts
+  f67a4a18a58d6341 119-120,122
+tests/unit/workspace-controller.test.ts
+  f67a4a18a58d6341 1-64
+src/renderer/components/lock-screen.tsx
+  f67a4a18a58d6341 6,13,43,104-109,111
+src/renderer/features/workspace/workspace-controller.ts
+  f67a4a18a58d6341 7,160,162,185,190-195,199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "6898e834b311f29c219edbc9ef2e2beac180a360",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 853,
+      "total_deletions": 617,
+      "accepted_lines": 853,
+      "overriden_lines": 0
+    }
+  }
+}
