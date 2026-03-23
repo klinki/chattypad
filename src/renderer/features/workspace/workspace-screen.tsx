@@ -321,11 +321,23 @@ export function WorkspaceScreen(): React.ReactElement {
   }, [state.isLoading]);
 
   const confirmCreateProject = useCallback(async () => {
-    const didCreate = await controller.createProject(projectName, true, password);
-    if (didCreate) {
+    const newProjectId = await controller.createProject(projectName, true, password, {
+      activeThreadId: null,
+      openActiveThread: false,
+    });
+    if (newProjectId) {
       setProjectDialog({ mode: "closed" });
       setProjectName("");
       setPassword("");
+      setWorkflowProjectId(null);
+
+      const newThreadId = await controller.createThread(newProjectId, {
+        openActiveThread: false,
+      });
+      if (newThreadId) {
+        setWorkflowThreadId(newThreadId);
+        setEditingItemId(newThreadId);
+      }
     }
   }, [projectName, password]);
 
@@ -488,10 +500,7 @@ function ProjectDialog({
   onConfirmCreate,
   onConfirmDelete,
 }: ProjectDialogProps): React.ReactElement | null {
-  if (dialog.mode === "closed") {
-    return null;
-  }
-
+  const isOpen = dialog.mode !== "closed";
   const isCreate = dialog.mode === "create-encrypted";
   const title = isCreate ? "Create encrypted project" : "Delete project";
   const confirmLabel = isCreate ? "Create project" : "Delete project";
@@ -500,6 +509,10 @@ function ProjectDialog({
     : !isBusy;
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -519,7 +532,11 @@ function ProjectDialog({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canSubmit, dialog.mode, isCreate, onClose, onConfirmCreate, onConfirmDelete]);
+  }, [canSubmit, isCreate, isOpen, onClose, onConfirmCreate, onConfirmDelete]);
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div

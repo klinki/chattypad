@@ -44,8 +44,6 @@ interface SidebarProps {
 export function Sidebar(props: SidebarProps): React.ReactElement {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: any[] } | null>(null);
   const createButtonRef = useRef<HTMLButtonElement>(null);
-  const createButtonTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const createMenuOpenedRef = useRef(false);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -90,19 +88,11 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
     }
   });
 
-  function clearCreateButtonTimer(): void {
-    if (createButtonTimerRef.current !== null) {
-      clearTimeout(createButtonTimerRef.current);
-      createButtonTimerRef.current = null;
-    }
-  }
-
-  function openCreateProjectMenu(): void {
+  function openCreateProjectMenu(x?: number, y?: number): void {
     const rect = createButtonRef.current?.getBoundingClientRect();
-    createMenuOpenedRef.current = true;
     setContextMenu({
-      x: rect?.left ?? 16,
-      y: (rect?.bottom ?? 16) + 4,
+      x: x ?? rect?.left ?? 16,
+      y: y ?? (rect?.bottom ?? 16) + 4,
       items: [
         { label: "Create new project", onClick: props.onCreateProject },
         { label: "Create new encrypted project", onClick: props.onCreateEncryptedProject },
@@ -157,34 +147,16 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
           <button
             type="button"
             ref={createButtonRef}
-            onPointerDown={(event) => {
-              if (event.button !== 0 || props.isBusy) {
-                return;
-              }
-
-              createMenuOpenedRef.current = false;
-              clearCreateButtonTimer();
-              createButtonTimerRef.current = setTimeout(() => {
-                openCreateProjectMenu();
-              }, 450);
-            }}
-            onPointerUp={clearCreateButtonTimer}
-            onPointerLeave={clearCreateButtonTimer}
-            onPointerCancel={clearCreateButtonTimer}
             onContextMenu={(event) => {
               event.preventDefault();
               if (!props.isBusy) {
-                clearCreateButtonTimer();
-                openCreateProjectMenu();
+                openCreateProjectMenu(event.clientX, event.clientY);
               }
             }}
             onClick={() => {
-              clearCreateButtonTimer();
-              if (createMenuOpenedRef.current) {
-                createMenuOpenedRef.current = false;
-                return;
+              if (!props.isBusy) {
+                props.onCreateProject();
               }
-              props.onCreateProject();
             }}
             disabled={props.isBusy}
             style={actionButtonStyle}

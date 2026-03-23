@@ -4,13 +4,13 @@
 - `docs/features/workflow-improvement/implementation-plan.md`
 
 ## Summary
-- Move plain project creation back to an inline-first workflow, push encrypted project creation behind a long-press menu, and chain project naming into thread naming and then composer focus.
+- Move plain project creation back to an inline-first workflow, push encrypted project creation behind a right-click menu, and chain project naming into thread naming and then composer focus.
 
 ## Implementation Areas
 
 ### Sidebar Creation Control
-- Add long-press handling to the sidebar `+` button.
-- Reuse the existing custom context menu for the long-press options.
+- Use right click on the sidebar `+` button to open the project-type menu.
+- Reuse the existing custom context menu for the right-click options.
 - Keep short click as the fast plain-project path.
 
 ### Plain Project Fast Path

@@ -9,11 +9,12 @@
 
 ## User Experience
 - A short click on the sidebar `+` button creates a plain project immediately, puts the project name into inline edit mode, and selects the whole name for fast replacement.
-- A long press on the sidebar `+` button opens a context menu with:
+- A right click on the sidebar `+` button opens a context menu with:
   - `Create new project`
   - `Create new encrypted project`
 - Choosing `Create new encrypted project` opens the detailed creation dialog.
 - The encrypted-project dialog must submit on `Enter` and close on `Escape`.
+- Confirming encrypted-project creation should immediately create the first thread and focus inline thread-name editing.
 - After a fast-created project name is committed, the app automatically creates a new thread in that project and focuses inline thread-name editing.
 - After the new thread name is committed, focus moves directly into the note editor so the user can start typing the first note immediately.
 
@@ -30,9 +31,10 @@
 - Confirming the project name automatically creates a new thread in that same project.
 - The new thread enters inline edit mode immediately after creation.
 - Confirming the thread name moves keyboard focus to the note editor for the active thread.
-- A long press on the sidebar `+` button opens the creation menu instead of creating a project immediately.
-- Selecting `Create new project` from the long-press menu uses the same fast plain-project flow as the short click.
+- A right click on the sidebar `+` button opens the creation menu.
+- Selecting `Create new project` from the right-click menu uses the same fast plain-project flow as the short click.
 - Selecting `Create new encrypted project` opens the detailed project dialog.
+- Confirming encrypted project creation automatically creates the first thread and focuses inline thread-name editing.
 - The encrypted-project dialog submits with `Enter` and closes with `Escape`.
 
 ## Scope Notes
