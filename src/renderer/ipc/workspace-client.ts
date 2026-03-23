@@ -153,8 +153,12 @@ function invokeMessage(channel: string, payload?: any): void {
 
 export const workspaceIpcClient: WorkspaceIpcClient = {
   loadWorkspace: () => invokeIpc(IPC_CHANNELS.WORKSPACE_LOAD),
-  createProject: (name, isEncrypted, password) =>
-    invokeIpc(IPC_CHANNELS.PROJECT_CREATE, { name, isEncrypted, password }),
+  createProject: (name, isEncrypted, password) => {
+    const payload: ProjectCreateRequest = { name };
+    if (isEncrypted !== undefined) payload.isEncrypted = isEncrypted;
+    if (password !== undefined) payload.password = password;
+    return invokeIpc(IPC_CHANNELS.PROJECT_CREATE, payload);
+  },
   unlockProject: (projectId, password) =>
     invokeIpc(IPC_CHANNELS.PROJECT_UNLOCK, { projectId, password }),
   lockProject: (projectId) =>

@@ -25,9 +25,9 @@ export function seedDevelopmentData(db: Database): void {
   ];
 
   const projects: Project[] = [
-    { id: "proj-001", name: "Work Research", sortOrder: 0, groupId: "grp-001", isCollapsed: false, createdAt: isoNow(-86400000 * 7), updatedAt: isoNow(-86400000 * 2) },
-    { id: "proj-002", name: "Personal Notes", sortOrder: 1, groupId: null, isCollapsed: false, createdAt: isoNow(-86400000 * 5), updatedAt: isoNow(-86400000 * 1) },
-    { id: "proj-003", name: "Side Projects", sortOrder: 2, groupId: "grp-002", isCollapsed: true, createdAt: isoNow(-86400000 * 3), updatedAt: isoNow(-3600000) },
+    { id: "proj-001", name: "Work Research", sortOrder: 0, groupId: "grp-001", isCollapsed: false, isEncrypted: false, passwordHash: null, encryptionSalt: null, createdAt: isoNow(-86400000 * 7), updatedAt: isoNow(-86400000 * 2) },
+    { id: "proj-002", name: "Personal Notes", sortOrder: 1, groupId: null, isCollapsed: false, isEncrypted: false, passwordHash: null, encryptionSalt: null, createdAt: isoNow(-86400000 * 5), updatedAt: isoNow(-86400000 * 1) },
+    { id: "proj-003", name: "Side Projects", sortOrder: 2, groupId: "grp-002", isCollapsed: true, isEncrypted: false, passwordHash: null, encryptionSalt: null, createdAt: isoNow(-86400000 * 3), updatedAt: isoNow(-3600000) },
   ];
 
   const threads: ChatThread[] = [

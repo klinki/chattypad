@@ -19,7 +19,14 @@ beforeEach(() => {
   initializeSchema(db);
   insertProject(db, {
     id: "p1",
-    name: "History Test", sortOrder: 0, groupId: null, isCollapsed: false, createdAt: "2024-01-01T00:00:00.000Z",
+    name: "History Test",
+    sortOrder: 0,
+    groupId: null,
+    isCollapsed: false,
+    isEncrypted: false,
+    passwordHash: null,
+    encryptionSalt: null,
+    createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   });
   insertThread(db, {
@@ -47,9 +54,9 @@ afterEach(() => {
 });
 
 describe("Thread history loading (US2)", () => {
-  test("loads all messages for a thread", () => {
+  test("loads all messages for a thread", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleThreadOpen("t1");
+    const result = await handlers.handleThreadOpen("t1");
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -57,9 +64,9 @@ describe("Thread history loading (US2)", () => {
     expect(result.data.messages).toHaveLength(10);
   });
 
-  test("messages are ordered oldest first (sequenceNumber ASC)", () => {
+  test("messages are ordered oldest first (sequenceNumber ASC)", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleThreadOpen("t1");
+    const result = await handlers.handleThreadOpen("t1");
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -68,9 +75,9 @@ describe("Thread history loading (US2)", () => {
     expect(seqs).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
-  test("each message has all required MessageView fields", () => {
+  test("each message has all required MessageView fields", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleThreadOpen("t1");
+    const result = await handlers.handleThreadOpen("t1");
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -85,9 +92,9 @@ describe("Thread history loading (US2)", () => {
     }
   });
 
-  test("thread metadata is included in response", () => {
+  test("thread metadata is included in response", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleThreadOpen("t1");
+    const result = await handlers.handleThreadOpen("t1");
     expect(result.success).toBe(true);
     if (!result.success) {
       return;

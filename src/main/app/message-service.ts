@@ -6,6 +6,7 @@ import type { Database } from "bun:sqlite";
 import { randomUUID } from "crypto";
 import {
   getThreadById,
+  getProjectById,
   insertMessage,
   getMessagesByThread,
   getNextSequenceNumber,

@@ -26,6 +26,14 @@ export function toIpcError(error: unknown, options: IpcErrorOptions): IpcError {
     };
   }
 
+  if (message === "Project is locked.") {
+    return {
+      code: "PROJECT_LOCKED",
+      message: "The project is locked. Please unlock it to access its contents.",
+      recoverable: true,
+    };
+  }
+
   const dbError = toDatabaseError(error, options.fallbackMessage);
   return {
     code: dbError.code || options.fallbackCode,
@@ -40,6 +48,21 @@ export function withIpcError<T>(
 ): IpcResult<T> {
   try {
     return { success: true, data: fn() };
+  } catch (error) {
+    return {
+      success: false,
+      error: toIpcError(error, options),
+    };
+  }
+}
+
+export async function withIpcErrorAsync<T>(
+  fn: () => Promise<T>,
+  options: IpcErrorOptions
+): Promise<IpcResult<T>> {
+  try {
+    const data = await fn();
+    return { success: true, data };
   } catch (error) {
     return {
       success: false,

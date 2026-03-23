@@ -54,9 +54,19 @@ export function initializeSchema(db: Database): void {
   `);
 
   // Attempt to add new columns to existing projects table (will fail silently if they already exist)
-  try { db.exec("ALTER TABLE projects ADD COLUMN group_id TEXT REFERENCES project_groups(id) ON DELETE SET NULL;"); } catch {}
-  try { db.exec("ALTER TABLE projects ADD COLUMN is_collapsed INTEGER NOT NULL DEFAULT 0;"); } catch {}
-  try { db.exec("ALTER TABLE projects ADD COLUMN is_encrypted INTEGER NOT NULL DEFAULT 0;"); } catch {}
-  try { db.exec("ALTER TABLE projects ADD COLUMN password_hash TEXT;"); } catch {}
-  try { db.exec("ALTER TABLE projects ADD COLUMN encryption_salt TEXT;"); } catch {}
+  const columns = [
+    { name: "group_id", def: "TEXT REFERENCES project_groups(id) ON DELETE SET NULL" },
+    { name: "is_collapsed", def: "INTEGER NOT NULL DEFAULT 0" },
+    { name: "is_encrypted", def: "INTEGER NOT NULL DEFAULT 0" },
+    { name: "password_hash", def: "TEXT" },
+    { name: "encryption_salt", def: "TEXT" }
+  ];
+
+  for (const col of columns) {
+    try {
+      db.exec(`ALTER TABLE projects ADD COLUMN ${col.name} ${col.def};`);
+    } catch (err) {
+      // Ignore errors (column likely already exists)
+    }
+  }
 }

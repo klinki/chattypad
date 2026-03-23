@@ -225,7 +225,7 @@ export function WorkspaceScreen(): React.ReactElement {
     />
   );
 
-  const hasProjects = (state.snapshot?.projects.length ?? 0) > 0;
+  const hasProjects = (state.snapshot?.projects?.length ?? 0) > 0;
 
   const activeProject = state.snapshot?.projects.find(
     (p) =>
@@ -234,14 +234,14 @@ export function WorkspaceScreen(): React.ReactElement {
         state.snapshot.threadsByProject[p.id]?.some((t) => t.id === state.snapshot?.activeThreadId))
   );
 
-  const isLocked = activeProject?.isEncrypted && !state.unlockedKeys[activeProject.id];
+  const isLocked = activeProject ? (activeProject.isEncrypted && !state.unlockedKeys[activeProject.id]) : false;
 
   const mainContent = state.activeThread ? (
-    isLocked ? (
+    isLocked && activeProject ? (
       <LockScreen
-        projectName={activeProject?.name ?? "Project"}
+        projectName={activeProject.name}
         isBusy={state.isLoading}
-        onUnlock={(password) => handleUnlockProject(activeProject!.id, password)}
+        onUnlock={(password) => handleUnlockProject(activeProject.id, password)}
       />
     ) : (
       <>

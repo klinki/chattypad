@@ -18,6 +18,7 @@ export interface ProjectSummary {
   isCollapsed: boolean;
   isEncrypted: boolean;
   isLocked: boolean;
+  encryptionSalt: string | null;
 }
 
 export interface ThreadSummary {

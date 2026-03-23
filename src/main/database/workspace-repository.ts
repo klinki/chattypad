@@ -358,6 +358,7 @@ export function projectToSummary(p: Project): ProjectSummary {
     isCollapsed: p.isCollapsed,
     isEncrypted: p.isEncrypted,
     isLocked: p.isEncrypted, // Default to locked if encrypted
+    encryptionSalt: p.encryptionSalt,
   };
 }
 

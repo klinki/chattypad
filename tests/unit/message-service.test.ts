@@ -20,7 +20,14 @@ beforeEach(() => {
   initializeSchema(db);
   insertProject(db, {
     id: "p1",
-    name: "Test Project", sortOrder: 0, groupId: null, isCollapsed: false, createdAt: "2024-01-01T00:00:00.000Z",
+    name: "Test Project",
+    sortOrder: 0,
+    groupId: null,
+    isCollapsed: false,
+    isEncrypted: false,
+    passwordHash: null,
+    encryptionSalt: null,
+    createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   });
   insertThread(db, {
@@ -38,8 +45,8 @@ afterEach(() => {
 });
 
 describe("sendMessage validation (FR-009)", () => {
-  test("rejects empty content", () => {
-    const result = sendMessage(db, { threadId: "t1", content: "", role: "user" });
+  test("rejects empty content", async () => {
+    const result = await sendMessage(db, { threadId: "t1", content: "", role: "user" });
     expect(result.success).toBe(false);
     if (result.success) {
       return;
@@ -47,8 +54,8 @@ describe("sendMessage validation (FR-009)", () => {
     expect(result.error.code).toBe("CONTENT_EMPTY");
   });
 
-  test("rejects whitespace-only content", () => {
-    const result = sendMessage(db, {
+  test("rejects whitespace-only content", async () => {
+    const result = await sendMessage(db, {
       threadId: "t1",
       content: "   \t\n  ",
       role: "user",
@@ -60,8 +67,8 @@ describe("sendMessage validation (FR-009)", () => {
     expect(result.error.code).toBe("CONTENT_EMPTY");
   });
 
-  test("rejects missing thread ID", () => {
-    const result = sendMessage(db, { threadId: "", content: "Hello", role: "user" });
+  test("rejects missing thread ID", async () => {
+    const result = await sendMessage(db, { threadId: "", content: "Hello", role: "user" });
     expect(result.success).toBe(false);
     if (result.success) {
       return;
@@ -69,8 +76,8 @@ describe("sendMessage validation (FR-009)", () => {
     expect(result.error.code).toBe("THREAD_ID_REQUIRED");
   });
 
-  test("rejects non-existent thread ID", () => {
-    const result = sendMessage(db, {
+  test("rejects non-existent thread ID", async () => {
+    const result = await sendMessage(db, {
       threadId: "no-such-thread",
       content: "Hello",
       role: "user",
@@ -84,8 +91,8 @@ describe("sendMessage validation (FR-009)", () => {
 });
 
 describe("sendMessage persistence (FR-010)", () => {
-  test("persists a valid message", () => {
-    const result = sendMessage(db, {
+  test("persists a valid message", async () => {
+    const result = await sendMessage(db, {
       threadId: "t1",
       content: "Hello, world!",
       role: "user",
@@ -99,8 +106,8 @@ describe("sendMessage persistence (FR-010)", () => {
     expect(messages[0]?.content).toBe("Hello, world!");
   });
 
-  test("trims content before storing", () => {
-    const result = sendMessage(db, { threadId: "t1", content: "  trimmed  ", role: "user" });
+  test("trims content before storing", async () => {
+    const result = await sendMessage(db, { threadId: "t1", content: "  trimmed  ", role: "user" });
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -109,16 +116,16 @@ describe("sendMessage persistence (FR-010)", () => {
     expect(messages[0]?.content).toBe("trimmed");
   });
 
-  test("assigns sequential sequence numbers", () => {
-    sendMessage(db, { threadId: "t1", content: "First", role: "user" });
-    sendMessage(db, { threadId: "t1", content: "Second", role: "assistant" });
-    sendMessage(db, { threadId: "t1", content: "Third", role: "user" });
+  test("assigns sequential sequence numbers", async () => {
+    await sendMessage(db, { threadId: "t1", content: "First", role: "user" });
+    await sendMessage(db, { threadId: "t1", content: "Second", role: "assistant" });
+    await sendMessage(db, { threadId: "t1", content: "Third", role: "user" });
     const messages = getMessagesByThread(db, "t1");
     expect(messages.map((m) => m.sequenceNumber)).toEqual([1, 2, 3]);
   });
 
-  test("returns refreshed ActiveThreadDetail including the new message", () => {
-    const result = sendMessage(db, { threadId: "t1", content: "New message", role: "user" });
+  test("returns refreshed ActiveThreadDetail including the new message", async () => {
+    const result = await sendMessage(db, { threadId: "t1", content: "New message", role: "user" });
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -126,14 +133,14 @@ describe("sendMessage persistence (FR-010)", () => {
     expect(result.data.messages.some((m) => m.content === "New message")).toBe(true);
   });
 
-  test("updates thread lastMessageAt after send", () => {
-    sendMessage(db, { threadId: "t1", content: "Update timestamp", role: "user" });
+  test("updates thread lastMessageAt after send", async () => {
+    await sendMessage(db, { threadId: "t1", content: "Update timestamp", role: "user" });
     const thread = getThreadById(db, "t1");
     expect(thread?.lastMessageAt).not.toBeNull();
   });
 
-  test("recoverable send error has recoverable flag true", () => {
-    const result = sendMessage(db, { threadId: "t1", content: "", role: "user" });
+  test("recoverable send error has recoverable flag true", async () => {
+    const result = await sendMessage(db, { threadId: "t1", content: "", role: "user" });
     expect(result.success).toBe(false);
     if (result.success) {
       return;

@@ -25,7 +25,7 @@ export class CryptoService {
     return crypto.subtle.deriveKey(
       {
         name: this.PBKDF2_ALGO,
-        salt,
+        salt: salt as any,
         iterations: this.ITERATIONS,
         hash: this.HASH_ALGO,
       },

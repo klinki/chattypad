@@ -51,8 +51,21 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     workspaceStore.setLoading(true);
     const result = await client.createProject(name, isEncrypted, password);
     if (result.success) {
-      await applySnapshot(result.data);
       const newProject = result.data.projects.find(p => !currentProjects.has(p.id));
+      
+      // If encrypted, derive key in renderer too so subsequent actions (like auto-thread creation) work
+      if (isEncrypted && password && newProject?.encryptionSalt) {
+        try {
+          const { CryptoService } = await import("../../../shared/crypto/crypto-service.js");
+          const salt = CryptoService.base64ToUint8Array(newProject.encryptionSalt);
+          const key = await CryptoService.deriveKey(password, salt);
+          workspaceStore.setUnlockedKey(newProject.id, key);
+        } catch (err) {
+          console.error("[controller] Failed to derive key for new project:", err);
+        }
+      }
+
+      await applySnapshot(result.data);
       return newProject?.id ?? null;
     }
 
@@ -148,19 +161,21 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     workspaceStore.setLoading(true);
     const result = await client.unlockProject(projectId, password);
     if (result.success) {
-      // In a real app, we'd derive the key here and store it in workspaceStore
-      // For this prototype, we'll simulate a key
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new Uint8Array(32),
-        "AES-GCM",
-        false,
-        ["encrypt", "decrypt"]
-      );
-      workspaceStore.setUnlockedKey(projectId, key);
+      const state = workspaceStore.getState();
+      const project = state.snapshot?.projects.find(p => p.id === projectId);
+      
+      if (project?.encryptionSalt) {
+        try {
+          const { CryptoService } = await import("../../../shared/crypto/crypto-service.js");
+          const salt = CryptoService.base64ToUint8Array(project.encryptionSalt);
+          const key = await CryptoService.deriveKey(password, salt);
+          workspaceStore.setUnlockedKey(projectId, key);
+        } catch (err) {
+          console.error("[controller] Failed to derive key after unlock:", err);
+        }
+      }
       
       // Re-open active thread if it was in this project
-      const state = workspaceStore.getState();
       if (state.snapshot?.activeThreadId) {
         await openThread(state.snapshot.activeThreadId);
       } else {

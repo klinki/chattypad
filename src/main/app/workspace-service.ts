@@ -3,6 +3,7 @@
  * Keeps IPC handlers thin by centralizing data mapping and error handling here.
  */
 import type { Database } from "bun:sqlite";
+import { randomUUID } from "crypto";
 import {
   deleteProject,
   getAllProjects,
@@ -34,7 +35,7 @@ import type {
   ActiveThreadDetail,
   IpcResult,
 } from "../../shared/contracts/workspace.js";
-import { withIpcError } from "./ipc-error.js";
+import { withIpcError, withIpcErrorAsync } from "./ipc-error.js";
 import { CryptoService } from "../../shared/crypto/crypto-service.js";
 
 export const sessionKeys = new Map<string, CryptoKey>();
@@ -50,26 +51,49 @@ function getInitialActiveThreadId(db: Database, projectIds: string[]): string | 
   return null;
 }
 
-function buildWorkspaceSnapshot(db: Database): WorkspaceSnapshot {
+async function buildWorkspaceSnapshot(db: Database): Promise<WorkspaceSnapshot> {
   return buildWorkspaceSnapshotWithActiveThread(db);
 }
 
-function buildWorkspaceSnapshotWithActiveThread(
+async function buildWorkspaceSnapshotWithActiveThread(
   db: Database,
   activeThreadId?: string | null
-): WorkspaceSnapshot {
+): Promise<WorkspaceSnapshot> {
   const projectGroups = getAllProjectGroups(db);
   const projects = getAllProjects(db);
   const threadsByProject: Record<string, ReturnType<typeof threadToSummary>[]> = {};
 
   for (const project of projects) {
     const threads = getAllThreadsByProject(db, project.id);
-    threadsByProject[project.id] = threads.map(threadToSummary);
+    const key = sessionKeys.get(project.id);
+    
+    const threadSummaries = await Promise.all(threads.map(async (t) => {
+      let title = t.title;
+      if (project.isEncrypted && key) {
+        try {
+          title = await CryptoService.decrypt(t.title, key);
+        } catch (err) {
+          title = "[Encrypted Content]";
+        }
+      }
+      return {
+        ...threadToSummary(t),
+        title,
+      };
+    }));
+
+    threadsByProject[project.id] = threadSummaries;
   }
+
+  const projectSummaries = projects.map((p) => {
+    const summary = projectToSummary(p);
+    summary.isLocked = p.isEncrypted && !sessionKeys.has(p.id);
+    return summary;
+  });
 
   return {
     projectGroups: projectGroups.map(projectGroupToSummary),
-    projects: projects.map(projectToSummary),
+    projects: projectSummaries,
     threadsByProject,
     activeThreadId:
       activeThreadId !== undefined
@@ -85,8 +109,8 @@ function buildWorkspaceSnapshotWithActiveThread(
  * Loads the full workspace snapshot for the sidebar.
  * FR-002, FR-012: Returns all projects and their threads; empty collections if none exist.
  */
-export function loadWorkspace(db: Database): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+export async function loadWorkspace(db: Database): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(() => {
     return buildWorkspaceSnapshot(db);
   }, {
     fallbackCode: "WORKSPACE_LOAD_FAILED",
@@ -123,21 +147,27 @@ export async function createProject(
     };
   }
 
-  return withIpcError(async () => {
+  return withIpcErrorAsync(async () => {
     const now = new Date().toISOString();
     let passwordHash: string | null = null;
     let encryptionSalt: string | null = null;
+    const projectId = randomUUID();
 
     if (isEncrypted && password) {
       // @ts-ignore - Bun.password is available in Bun environment
       passwordHash = await Bun.password.hash(password);
+      
       // We use a separate salt for PBKDF2 key derivation (handled in CryptoService)
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      encryptionSalt = btoa(String.fromCharCode(...salt));
+      const salt = CryptoService.generateSalt();
+      encryptionSalt = CryptoService.arrayBufferToBase64(salt);
+      
+      // Unlock the project immediately for the current session
+      const key = await CryptoService.deriveKey(password, salt);
+      sessionKeys.set(projectId, key);
     }
 
     const project: Project = {
-      id: crypto.randomUUID(),
+      id: projectId,
       name: trimmedName,
       sortOrder: getNextProjectSortOrder(db),
       groupId: null,
@@ -157,10 +187,10 @@ export async function createProject(
   });
 }
 
-export function removeProject(
+export async function removeProject(
   db: Database,
   projectId: string
-): IpcResult<WorkspaceSnapshot> {
+): Promise<IpcResult<WorkspaceSnapshot>> {
   if (!projectId || projectId.trim() === "") {
     return {
       success: false,
@@ -184,7 +214,7 @@ export function removeProject(
     };
   }
 
-  return withIpcError(() => {
+  return withIpcErrorAsync(async () => {
     deleteProject(db, projectId);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -220,7 +250,7 @@ export async function createThread(
     };
   }
 
-  return withIpcError(async () => {
+  return withIpcErrorAsync(async () => {
     const now = new Date().toISOString();
     let title = "New thread";
     
@@ -233,7 +263,7 @@ export async function createThread(
     }
 
     const thread: ChatThread = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       projectId,
       title,
       sortOrder: getNextThreadSortOrder(db, projectId),
@@ -254,10 +284,10 @@ export async function createThread(
  * Opens a thread and returns its metadata and ordered messages.
  * FR-004, FR-006: Returns messages in chronological order.
  */
-export function openThread(
+export async function openThread(
   db: Database,
   threadId: string
-): IpcResult<ActiveThreadDetail> {
+): Promise<IpcResult<ActiveThreadDetail>> {
   if (!threadId || threadId.trim() === "") {
     return {
       success: false,
@@ -269,7 +299,7 @@ export function openThread(
     };
   }
 
-  return withIpcError(async () => {
+  return withIpcErrorAsync(async () => {
     const thread = getThreadById(db, threadId);
     if (!thread) {
       throw new Error(`Thread not found: ${threadId}`);
@@ -319,12 +349,12 @@ export function openThread(
   });
 }
 
-export function updateProject(
+export async function updateProject(
   db: Database,
   projectId: string,
   updates: { name?: string; isCollapsed?: boolean }
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     updateProjectRepo(db, projectId, updates);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -333,13 +363,13 @@ export function updateProject(
   });
 }
 
-export function createProjectGroup(
+export async function createProjectGroup(
   db: Database,
   name: string
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     const group: ProjectGroup = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       name,
       sortOrder: getNextProjectGroupSortOrder(db),
       createdAt: new Date().toISOString(),
@@ -353,11 +383,11 @@ export function createProjectGroup(
   });
 }
 
-export function removeProjectGroup(
+export async function removeProjectGroup(
   db: Database,
   groupId: string
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     deleteProjectGroup(db, groupId);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -366,12 +396,12 @@ export function removeProjectGroup(
   });
 }
 
-export function renameProjectGroup(
+export async function renameProjectGroup(
   db: Database,
   groupId: string,
   name: string
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     updateProjectGroup(db, groupId, name);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -380,12 +410,12 @@ export function renameProjectGroup(
   });
 }
 
-export function moveProjectToGroup(
+export async function moveProjectToGroup(
   db: Database,
   projectId: string,
   groupId: string | null
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     updateProjectRepo(db, projectId, { groupId });
     return buildWorkspaceSnapshot(db);
   }, {
@@ -394,12 +424,12 @@ export function moveProjectToGroup(
   });
 }
 
-export function reorderProject(
+export async function reorderProject(
   db: Database,
   projectId: string,
   targetSortOrder: number
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     updateProjectSortOrder(db, projectId, targetSortOrder);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -408,12 +438,12 @@ export function reorderProject(
   });
 }
 
-export function reorderThread(
+export async function reorderThread(
   db: Database,
   threadId: string,
   targetSortOrder: number
-): IpcResult<WorkspaceSnapshot> {
-  return withIpcError(() => {
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
     updateThreadSortOrder(db, threadId, targetSortOrder);
     return buildWorkspaceSnapshot(db);
   }, {
@@ -422,34 +452,42 @@ export function reorderThread(
   });
 }
 
+export async function updateThread(
+  db: Database,
+  threadId: string,
+  title: string
+): Promise<IpcResult<WorkspaceSnapshot>> {
+  return withIpcErrorAsync(async () => {
+    updateThreadTitle(db, threadId, title);
+    return buildWorkspaceSnapshot(db);
+  }, {
+    fallbackCode: "THREAD_UPDATE_FAILED",
+    fallbackMessage: "The thread could not be updated.",
+  });
+}
+
 export async function unlockProject(
   db: Database,
   projectId: string,
   password: string
 ): Promise<IpcResult<void>> {
-  return withIpcError(async () => {
+  return withIpcErrorAsync(async () => {
     const project = getProjectById(db, projectId);
     if (!project || !project.isEncrypted || !project.passwordHash) {
-      return {
-        success: false,
-        error: {
-          code: "PROJECT_NOT_ENCRYPTED",
-          message: "The project is not encrypted.",
-          recoverable: true,
-        },
+      throw {
+        code: "PROJECT_NOT_ENCRYPTED",
+        message: "The project is not encrypted.",
+        recoverable: true,
       };
     }
 
     // @ts-ignore - Bun.password is available
     const isMatch = await Bun.password.verify(password, project.passwordHash);
     if (!isMatch) {
-      return {
-        success: false,
-        error: {
-          code: "INVALID_PASSWORD",
-          message: "Incorrect password.",
-          recoverable: true,
-        },
+      throw {
+        code: "INVALID_PASSWORD",
+        message: "Incorrect password.",
+        recoverable: true,
       };
     }
 
@@ -458,8 +496,6 @@ export async function unlockProject(
       const key = await CryptoService.deriveKey(password, salt);
       sessionKeys.set(projectId, key);
     }
-
-    return { success: true, data: undefined };
   }, {
     fallbackCode: "PROJECT_UNLOCK_FAILED",
     fallbackMessage: "Failed to unlock project.",

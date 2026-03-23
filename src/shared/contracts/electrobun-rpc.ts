@@ -8,6 +8,8 @@ import type {
   ProjectGroupDeleteRequest,
   ProjectGroupUpdateRequest,
   ProjectMoveToGroupRequest,
+  ProjectUnlockRequest,
+  ProjectLockRequest,
   ReorderRequest,
   ThreadCreateRequest,
   ThreadUpdateRequest,
@@ -87,6 +89,18 @@ export interface WorkspaceElectrobunRpcSchema {
       [IPC_CHANNELS.MESSAGE_SEND]: {
         params: MessageSendRequest;
         response: IpcResult<ActiveThreadDetail>;
+      };
+      [IPC_CHANNELS.PROJECT_UNLOCK]: {
+        params: ProjectUnlockRequest;
+        response: IpcResult<void>;
+      };
+      [IPC_CHANNELS.PROJECT_LOCK]: {
+        params: ProjectLockRequest;
+        response: IpcResult<void>;
+      };
+      [IPC_CHANNELS.PROJECT_LOCK_ALL]: {
+        params: undefined;
+        response: IpcResult<void>;
       };
       [IPC_CHANNELS.WINDOW_GET_FRAME]: {
         params: undefined;

@@ -26,6 +26,9 @@ import {
   reorderProject,
   reorderThread,
   updateThread,
+  unlockProject,
+  lockProject,
+  lockAllProjects,
 } from "../app/workspace-service.js";
 import { sendMessage } from "../app/message-service.js";
 import type {
@@ -39,6 +42,8 @@ import type {
   ProjectGroupDeleteRequest,
   ProjectGroupUpdateRequest,
   ProjectMoveToGroupRequest,
+  ProjectUnlockRequest,
+  ProjectLockRequest,
   ReorderRequest,
   ThreadUpdateRequest,
   ThreadCreateRequest,
@@ -52,19 +57,19 @@ import type {
 const debugIpcEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
 
 export interface WorkspaceHandlers {
-    handleWorkspaceLoad: () => IpcResult<WorkspaceSnapshot>;
+    handleWorkspaceLoad: () => Promise<IpcResult<WorkspaceSnapshot>>;
   handleProjectCreate: (name: string, isEncrypted?: boolean, password?: string) => Promise<IpcResult<WorkspaceSnapshot>>;
-  handleProjectDelete: (projectId: string) => IpcResult<WorkspaceSnapshot>;
-  handleProjectUpdate: (projectId: string, name?: string, isCollapsed?: boolean) => IpcResult<WorkspaceSnapshot>;
-  handleProjectGroupCreate: (name: string) => IpcResult<WorkspaceSnapshot>;
-  handleProjectGroupDelete: (groupId: string) => IpcResult<WorkspaceSnapshot>;
-  handleProjectGroupUpdate: (groupId: string, name: string) => IpcResult<WorkspaceSnapshot>;
-  handleProjectMoveToGroup: (projectId: string, groupId: string | null) => IpcResult<WorkspaceSnapshot>;
-  handleProjectReorder: (projectId: string, targetSortOrder: number) => IpcResult<WorkspaceSnapshot>;
+  handleProjectDelete: (projectId: string) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectUpdate: (projectId: string, name?: string, isCollapsed?: boolean) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectGroupCreate: (name: string) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectGroupDelete: (groupId: string) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectGroupUpdate: (groupId: string, name: string) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectMoveToGroup: (projectId: string, groupId: string | null) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleProjectReorder: (projectId: string, targetSortOrder: number) => Promise<IpcResult<WorkspaceSnapshot>>;
   handleThreadCreate: (projectId: string) => Promise<IpcResult<WorkspaceSnapshot>>;
-  handleThreadUpdate: (threadId: string, title: string) => IpcResult<WorkspaceSnapshot>;
-  handleThreadReorder: (threadId: string, targetSortOrder: number) => IpcResult<WorkspaceSnapshot>;
-  handleThreadOpen: (threadId: string) => IpcResult<ActiveThreadDetail>;
+  handleThreadUpdate: (threadId: string, title: string) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleThreadReorder: (threadId: string, targetSortOrder: number) => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleThreadOpen: (threadId: string) => Promise<IpcResult<ActiveThreadDetail>>;
   handleProjectUnlock: (projectId: string, password: string) => Promise<IpcResult<void>>;
   handleProjectLock: (projectId: string) => IpcResult<void>;
   handleProjectLockAll: () => IpcResult<void>;
@@ -76,24 +81,27 @@ export interface WorkspaceHandlers {
 }
 
 export interface WorkspaceRpcRequestHandlers {
-    [CHANNELS.WORKSPACE_LOAD]: () => IpcResult<WorkspaceSnapshot>;
+    [CHANNELS.WORKSPACE_LOAD]: () => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.PROJECT_CREATE]: (payload?: ProjectCreateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
-  [CHANNELS.PROJECT_DELETE]: (payload?: ProjectDeleteRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_UPDATE]: (payload?: ProjectUpdateRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_GROUP_CREATE]: (payload?: ProjectGroupCreateRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_GROUP_DELETE]: (payload?: ProjectGroupDeleteRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_GROUP_UPDATE]: (payload?: ProjectGroupUpdateRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_MOVE_TO_GROUP]: (payload?: ProjectMoveToGroupRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.PROJECT_REORDER]: (payload?: ReorderRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.THREAD_CREATE]: (payload?: ThreadCreateRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.THREAD_UPDATE]: (payload?: ThreadUpdateRequest) => IpcResult<WorkspaceSnapshot>;
-  [CHANNELS.THREAD_REORDER]: (payload?: ReorderRequest) => IpcResult<WorkspaceSnapshot>;
+  [CHANNELS.PROJECT_DELETE]: (payload?: ProjectDeleteRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_UPDATE]: (payload?: ProjectUpdateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_GROUP_CREATE]: (payload?: ProjectGroupCreateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_GROUP_DELETE]: (payload?: ProjectGroupDeleteRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_GROUP_UPDATE]: (payload?: ProjectGroupUpdateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_MOVE_TO_GROUP]: (payload?: ProjectMoveToGroupRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.PROJECT_REORDER]: (payload?: ReorderRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.THREAD_CREATE]: (payload?: ThreadCreateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.THREAD_UPDATE]: (payload?: ThreadUpdateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.THREAD_REORDER]: (payload?: ReorderRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.THREAD_OPEN]: (
     payload?: ThreadOpenRequest
   ) => Promise<IpcResult<ActiveThreadDetail>>;
   [CHANNELS.MESSAGE_SEND]: (
     payload?: MessageSendRequest
   ) => Promise<IpcResult<ActiveThreadDetail>>;
+  [CHANNELS.PROJECT_UNLOCK]: (payload?: ProjectUnlockRequest) => Promise<IpcResult<void>>;
+  [CHANNELS.PROJECT_LOCK]: (payload?: ProjectLockRequest) => Promise<IpcResult<void>>;
+  [CHANNELS.PROJECT_LOCK_ALL]: () => IpcResult<void>;
 }
 
 /**
@@ -121,7 +129,7 @@ export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
     handleThreadReorder: (threadId: string, targetSortOrder: number) => reorderThread(db, threadId, targetSortOrder),
     handleThreadOpen: (threadId: string) => openThread(db, threadId),
     handleProjectUnlock: (projectId: string, password: string) => unlockProject(db, projectId, password),
-    handleProjectLock: (projectId: string) => Promise.resolve(lockProject(db, projectId)),
+    handleProjectLock: (projectId: string) => lockProject(db, projectId),
     handleProjectLockAll: () => lockAllProjects(db),
     handleMessageSend: (threadId: string, content: string, role: string) =>
       sendMessage(db, { threadId, content, role }),
@@ -171,11 +179,16 @@ function normalizeThreadUpdateRequest(payload?: any): any {
 function normalizeProjectCreateRequest(
   payload?: ProjectCreateRequest
 ): ProjectCreateRequest {
-  return {
+  const request: ProjectCreateRequest = {
     name: typeof payload?.name === "string" ? payload.name : "",
     isEncrypted: typeof payload?.isEncrypted === "boolean" ? payload.isEncrypted : false,
-    password: typeof payload?.password === "string" ? payload.password : undefined,
   };
+  
+  if (typeof payload?.password === "string") {
+    request.password = payload.password;
+  }
+
+  return request;
 }
 
 function normalizeProjectDeleteRequest(
@@ -200,6 +213,14 @@ function normalizeThreadCreateRequest(
   };
 }
 
+function normalizeProjectDeleteRequest(
+  payload?: ProjectDeleteRequest
+): ProjectDeleteRequest {
+  return {
+    projectId: typeof payload?.projectId === "string" ? payload.projectId : "",
+  };
+}
+
 /**
  * Builds the Electrobun request handler map from the plain workspace handlers.
  */
@@ -217,9 +238,9 @@ export function createWorkspaceRpcRequestHandlers(
   }
 
   return {
-    [CHANNELS.WORKSPACE_LOAD]: () => {
+    [CHANNELS.WORKSPACE_LOAD]: async () => {
       logRequest(CHANNELS.WORKSPACE_LOAD, "request");
-      const result = handlers.handleWorkspaceLoad();
+      const result = await handlers.handleWorkspaceLoad();
       logRequest(
         CHANNELS.WORKSPACE_LOAD,
         result.success ? "success" : `error ${result.error.code}`
@@ -236,72 +257,72 @@ export function createWorkspaceRpcRequestHandlers(
       );
       return result;
     },
-    [CHANNELS.PROJECT_DELETE]: (payload) => {
+    [CHANNELS.PROJECT_DELETE]: async (payload) => {
       const request = normalizeProjectDeleteRequest(payload);
       logRequest(
         CHANNELS.PROJECT_DELETE,
         `request projectId=${request.projectId}`
       );
-      const result = handlers.handleProjectDelete(request.projectId);
+      const result = await handlers.handleProjectDelete(request.projectId);
       logRequest(
         CHANNELS.PROJECT_DELETE,
         result.success ? "success" : `error ${result.error.code}`
       );
       return result;
     },
-        [CHANNELS.PROJECT_UPDATE]: (payload) => {
+    [CHANNELS.PROJECT_UPDATE]: async (payload) => {
       const request = normalizeProjectUpdateRequest(payload);
       logRequest(CHANNELS.PROJECT_UPDATE, `request projectId=${request.projectId}`);
-      const result = handlers.handleProjectUpdate(request.projectId, request.name, request.isCollapsed);
+      const result = await handlers.handleProjectUpdate(request.projectId, request.name, request.isCollapsed);
       logRequest(CHANNELS.PROJECT_UPDATE, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_GROUP_CREATE]: (payload) => {
+    [CHANNELS.PROJECT_GROUP_CREATE]: async (payload) => {
       const request = normalizeProjectGroupCreateRequest(payload);
       logRequest(CHANNELS.PROJECT_GROUP_CREATE, `request name=${request.name}`);
-      const result = handlers.handleProjectGroupCreate(request.name);
+      const result = await handlers.handleProjectGroupCreate(request.name);
       logRequest(CHANNELS.PROJECT_GROUP_CREATE, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_GROUP_DELETE]: (payload) => {
+    [CHANNELS.PROJECT_GROUP_DELETE]: async (payload) => {
       const request = normalizeProjectGroupDeleteRequest(payload);
       logRequest(CHANNELS.PROJECT_GROUP_DELETE, `request groupId=${request.groupId}`);
-      const result = handlers.handleProjectGroupDelete(request.groupId);
+      const result = await handlers.handleProjectGroupDelete(request.groupId);
       logRequest(CHANNELS.PROJECT_GROUP_DELETE, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_GROUP_UPDATE]: (payload) => {
+    [CHANNELS.PROJECT_GROUP_UPDATE]: async (payload) => {
       const request = normalizeProjectGroupUpdateRequest(payload);
       logRequest(CHANNELS.PROJECT_GROUP_UPDATE, `request groupId=${request.groupId}`);
-      const result = handlers.handleProjectGroupUpdate(request.groupId, request.name);
+      const result = await handlers.handleProjectGroupUpdate(request.groupId, request.name);
       logRequest(CHANNELS.PROJECT_GROUP_UPDATE, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_MOVE_TO_GROUP]: (payload) => {
+    [CHANNELS.PROJECT_MOVE_TO_GROUP]: async (payload) => {
       const request = normalizeProjectMoveToGroupRequest(payload);
       logRequest(CHANNELS.PROJECT_MOVE_TO_GROUP, `request projectId=${request.projectId}`);
-      const result = handlers.handleProjectMoveToGroup(request.projectId, request.groupId);
+      const result = await handlers.handleProjectMoveToGroup(request.projectId, request.groupId);
       logRequest(CHANNELS.PROJECT_MOVE_TO_GROUP, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_REORDER]: (payload) => {
+    [CHANNELS.PROJECT_REORDER]: async (payload) => {
       const request = normalizeReorderRequest(payload);
       logRequest(CHANNELS.PROJECT_REORDER, `request itemId=${request.itemId}`);
-      const result = handlers.handleProjectReorder(request.itemId, request.targetSortOrder);
+      const result = await handlers.handleProjectReorder(request.itemId, request.targetSortOrder);
       logRequest(CHANNELS.PROJECT_REORDER, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.THREAD_UPDATE]: (payload) => {
+    [CHANNELS.THREAD_UPDATE]: async (payload) => {
       const request = normalizeThreadUpdateRequest(payload);
       logRequest(CHANNELS.THREAD_UPDATE, `request threadId=${request.threadId}`);
-      const result = handlers.handleThreadUpdate(request.threadId, request.title);
+      const result = await handlers.handleThreadUpdate(request.threadId, request.title);
       logRequest(CHANNELS.THREAD_UPDATE, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.THREAD_REORDER]: (payload) => {
+    [CHANNELS.THREAD_REORDER]: async (payload) => {
       const request = normalizeReorderRequest(payload);
       logRequest(CHANNELS.THREAD_REORDER, `request itemId=${request.itemId}`);
-      const result = handlers.handleThreadReorder(request.itemId, request.targetSortOrder);
+      const result = await handlers.handleThreadReorder(request.itemId, request.targetSortOrder);
       logRequest(CHANNELS.THREAD_REORDER, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
@@ -325,18 +346,19 @@ export function createWorkspaceRpcRequestHandlers(
       );
       return result;
     },
-    [CHANNELS.PROJECT_UNLOCK]: async (payload) => {
+    [CHANNELS.PROJECT_UNLOCK]: async (payload?: ProjectUnlockRequest) => {
       logRequest(CHANNELS.PROJECT_UNLOCK, `request projectId=${payload?.projectId}`);
       const result = await handlers.handleProjectUnlock(payload?.projectId ?? "", payload?.password ?? "");
       logRequest(CHANNELS.PROJECT_UNLOCK, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
-    [CHANNELS.PROJECT_LOCK]: async (payload) => {
+    [CHANNELS.PROJECT_LOCK]: async (payload?: ProjectLockRequest) => {
       logRequest(CHANNELS.PROJECT_LOCK, `request projectId=${payload?.projectId}`);
       const result = await handlers.handleProjectLock(payload?.projectId ?? "");
       logRequest(CHANNELS.PROJECT_LOCK, result.success ? "success" : `error ${result.error.code}`);
       return result;
     },
+
     [CHANNELS.PROJECT_LOCK_ALL]: () => {
       logRequest(CHANNELS.PROJECT_LOCK_ALL, "request");
       const result = handlers.handleProjectLockAll();
