@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#EE5A24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F9CA24;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="paper3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFF5E6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow3" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#9B2C2C" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Warm gradient rounded background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" ry="96" fill="url(#bg3)"/>
+
+  <!-- Pencil body (angled, as if writing) -->
+  <g transform="rotate(-40, 340, 320)" filter="url(#shadow3)">
+    <!-- Pencil shaft -->
+    <rect x="320" y="140" width="40" height="220" rx="4" fill="#FFD93D"/>
+    <rect x="320" y="140" width="40" height="220" rx="4" fill="url(#paper3)" opacity="0.3"/>
+
+    <!-- Pencil band -->
+    <rect x="318" y="320" width="44" height="16" rx="2" fill="#C0392B"/>
+    <!-- Pencil eraser -->
+    <rect x="322" y="336" width="36" height="28" rx="8" fill="#FF8A80"/>
+
+    <!-- Pencil tip -->
+    <polygon points="320,140 360,140 340,95" fill="#FFD93D"/>
+    <polygon points="332,115 348,115 340,95" fill="#2D3436"/>
+  </g>
+
+  <!-- Main speech bubble (large, friendly) -->
+  <g filter="url(#shadow3)">
+    <path d="
+      M 100 140
+      L 300 140
+      Q 330 140, 330 170
+      L 330 290
+      Q 330 320, 300 320
+      L 200 320
+      L 155 370
+      L 155 320
+      L 100 320
+      Q 70 320, 70 290
+      L 70 170
+      Q 70 140, 100 140
+      Z
+    " fill="white"/>
+  </g>
+
+  <!-- Friendly face in speech bubble (the "chatty" personality) -->
+  <!-- Left eye -->
+  <ellipse cx="145" cy="215" rx="16" ry="20" fill="#2D3436"/>
+  <ellipse cx="150" cy="210" rx="5" ry="6" fill="white"/>
+
+  <!-- Right eye -->
+  <ellipse cx="255" cy="215" rx="16" ry="20" fill="#2D3436"/>
+  <ellipse cx="260" cy="210" rx="5" ry="6" fill="white"/>
+
+  <!-- Smile -->
+  <path d="M 155 260 Q 200 300 245 260" fill="none" stroke="#2D3436" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Small blush circles -->
+  <circle cx="130" cy="258" r="14" fill="#FFCCCC" opacity="0.6"/>
+  <circle cx="270" cy="258" r="14" fill="#FFCCCC" opacity="0.6"/>
+</svg>
