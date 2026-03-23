@@ -1,0 +1,49 @@
+docs/bugs/004-encrypted-thread-title-display/fix-attempt-002.md
+  f67a4a18a58d6341 1-35,37-38
+docs/bugs/004-encrypted-thread-title-display/status.md
+  f67a4a18a58d6341 1,3,6,9-11,14-15
+tests/unit/crypto-service.test.ts
+  f67a4a18a58d6341 5,11,13
+tests/integration/workspace-navigation.test.ts
+  f67a4a18a58d6341 25,27,40,44,57,59,89,100,102
+tests/integration/encrypted-thread-titles.test.ts
+  f67a4a18a58d6341 1-102
+tests/unit/workspace-repository.test.ts
+  f67a4a18a58d6341 120
+src/main/app/message-service.ts
+  f67a4a18a58d6341 25,165
+src/renderer/state/workspace-store.ts
+  f67a4a18a58d6341 50-55,67-70,72-79,138,146,155-162
+src/renderer/features/workspace/workspace-controller.ts
+  f67a4a18a58d6341 177-180,182-183,185
+tests/integration/message-send.test.ts
+  f67a4a18a58d6341 94
+docs/bugs/004-encrypted-thread-title-display/description.md
+  f67a4a18a58d6341 1,3-4,6-7,9-11,14,17-18,21-24,27-33,36
+src/main/app/workspace-service.ts
+  f67a4a18a58d6341 43,45-50,53-63,65,96,334,344,475-477,480-482,484-487,489-490,492
+docs/bugs/004-encrypted-thread-title-display/initial-findings.md
+  f67a4a18a58d6341 1-23
+tests/unit/workspace-store.test.ts
+  f67a4a18a58d6341 1-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "dda9fd21c9a4cd0aa4e18fa858ce4ccfd5631273",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 1688,
+      "total_deletions": 1415,
+      "accepted_lines": 1683,
+      "overriden_lines": 4
+    }
+  }
+}
