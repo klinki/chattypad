@@ -1,0 +1,27 @@
+src/renderer/components/sidebar-tree-state.ts
+  f67a4a18a58d6341 1-11
+src/renderer/components/sidebar.tsx
+  f67a4a18a58d6341 6,167-169,227-229,233-234,239-240,246,249,322,484
+tests/unit/sidebar-tree-state.test.ts
+  f67a4a18a58d6341 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "5ae85f65c2fd70133b9156be481670a365ae8b76",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 68,
+      "total_deletions": 6,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    }
+  }
+}
