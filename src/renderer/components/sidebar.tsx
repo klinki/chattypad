@@ -20,10 +20,20 @@ interface SidebarProps {
   onSetEditingItemId: (id: string | null) => void;
   onSelectThread: (threadId: string) => void;
   onCreateProject: () => void;
+  onCreateEncryptedProject: () => void;
   onUpdateProject: (id: string, name?: string, isCollapsed?: boolean) => void;
+  onCommitProjectName: (
+    project: ProjectSummary,
+    name: string,
+    source: "enter" | "blur"
+  ) => Promise<boolean>;
   onCreateThread: (project: ProjectSummary) => void;
   onUnlockProject?: (project: ProjectSummary) => void;
-  onUpdateThread: (id: string, title: string) => void;
+  onCommitThreadTitle: (
+    thread: ThreadSummary,
+    title: string,
+    source: "enter" | "blur"
+  ) => Promise<boolean>;
   onDeleteProject: (project: ProjectSummary) => void;
   onMoveProjectToGroup?: (projectId: string, groupId: string | null) => void;
   onReorderProject?: (projectId: string, targetSortOrder: number) => void;
@@ -33,6 +43,9 @@ interface SidebarProps {
 
 export function Sidebar(props: SidebarProps): React.ReactElement {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: any[] } | null>(null);
+  const createButtonRef = useRef<HTMLButtonElement>(null);
+  const createButtonTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const createMenuOpenedRef = useRef(false);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -76,6 +89,26 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
       groupedProjects["none"]!.push(p);
     }
   });
+
+  function clearCreateButtonTimer(): void {
+    if (createButtonTimerRef.current !== null) {
+      clearTimeout(createButtonTimerRef.current);
+      createButtonTimerRef.current = null;
+    }
+  }
+
+  function openCreateProjectMenu(): void {
+    const rect = createButtonRef.current?.getBoundingClientRect();
+    createMenuOpenedRef.current = true;
+    setContextMenu({
+      x: rect?.left ?? 16,
+      y: (rect?.bottom ?? 16) + 4,
+      items: [
+        { label: "Create new project", onClick: props.onCreateProject },
+        { label: "Create new encrypted project", onClick: props.onCreateEncryptedProject },
+      ],
+    });
+  }
 
   return (
     <nav
@@ -123,7 +156,36 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
           </button>
           <button
             type="button"
-            onClick={props.onCreateProject}
+            ref={createButtonRef}
+            onPointerDown={(event) => {
+              if (event.button !== 0 || props.isBusy) {
+                return;
+              }
+
+              createMenuOpenedRef.current = false;
+              clearCreateButtonTimer();
+              createButtonTimerRef.current = setTimeout(() => {
+                openCreateProjectMenu();
+              }, 450);
+            }}
+            onPointerUp={clearCreateButtonTimer}
+            onPointerLeave={clearCreateButtonTimer}
+            onPointerCancel={clearCreateButtonTimer}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              if (!props.isBusy) {
+                clearCreateButtonTimer();
+                openCreateProjectMenu();
+              }
+            }}
+            onClick={() => {
+              clearCreateButtonTimer();
+              if (createMenuOpenedRef.current) {
+                createMenuOpenedRef.current = false;
+                return;
+              }
+              props.onCreateProject();
+            }}
             disabled={props.isBusy}
             style={actionButtonStyle}
           >
@@ -209,6 +271,17 @@ function ProjectItem({ project, props, setContextMenu }: any) {
     });
   };
 
+  async function commitProjectName(source: "enter" | "blur"): Promise<void> {
+    const trimmedName = tempProjectName.trim();
+    if (trimmedName === "") {
+      props.onSetEditingItemId(null);
+      setTempProjectName(project.name);
+      return;
+    }
+
+    await props.onCommitProjectName(project, trimmedName, source);
+  }
+
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
@@ -259,20 +332,14 @@ function ProjectItem({ project, props, setContextMenu }: any) {
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                if (tempProjectName.trim()) {
-                  props.onUpdateProject(project.id, tempProjectName);
-                }
-                props.onSetEditingItemId(null);
+                void commitProjectName("enter");
               } else if (e.key === "Escape") {
                 props.onSetEditingItemId(null);
                 setTempProjectName(project.name);
               }
             }}
             onBlur={() => {
-              if (tempProjectName.trim() && tempProjectName !== project.name) {
-                props.onUpdateProject(project.id, tempProjectName);
-              }
-              props.onSetEditingItemId(null);
+              void commitProjectName("blur");
             }}
             style={inlineInputStyle}
           />
@@ -371,7 +438,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
                   isEditing={isEditingThread}
                   onSelectThread={props.onSelectThread}
                   onSetEditingItemId={props.onSetEditingItemId}
-                  onUpdateThread={props.onUpdateThread}
+                  onCommitThreadTitle={props.onCommitThreadTitle}
                   setContextMenu={setContextMenu}
                 />
               );
@@ -383,7 +450,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
   );
 }
 
-function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingItemId, onUpdateThread, setContextMenu }: any) {
+function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingItemId, onCommitThreadTitle, setContextMenu }: any) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: `thread-${thread.id}` });
   
   const style = {
@@ -413,6 +480,17 @@ function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingI
     });
   };
 
+  async function commitThreadTitle(source: "enter" | "blur"): Promise<void> {
+    const trimmedTitle = tempTitle.trim();
+    if (trimmedTitle === "") {
+      onSetEditingItemId(null);
+      setTempTitle(thread.title);
+      return;
+    }
+
+    await onCommitThreadTitle(thread, trimmedTitle, source);
+  }
+
   if (isEditing) {
     return (
       <div ref={setNodeRef} style={{ ...style, padding: "7px 12px 7px 24px", marginBottom: 1 }} {...attributes} {...listeners}>
@@ -423,20 +501,14 @@ function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingI
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              if (tempTitle.trim()) {
-                onUpdateThread(thread.id, tempTitle);
-              }
-              onSetEditingItemId(null);
+              void commitThreadTitle("enter");
             } else if (e.key === "Escape") {
               onSetEditingItemId(null);
               setTempTitle(thread.title);
             }
           }}
           onBlur={() => {
-            if (tempTitle.trim() && tempTitle !== thread.title) {
-              onUpdateThread(thread.id, tempTitle);
-            }
-            onSetEditingItemId(null);
+            void commitThreadTitle("blur");
           }}
           style={inlineInputStyle}
         />

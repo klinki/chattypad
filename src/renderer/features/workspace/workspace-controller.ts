@@ -6,6 +6,11 @@ import { workspaceStore } from "../../state/workspace-store.js";
 import type { WorkspaceIpcClient } from "../../ipc/workspace-client.js";
 import type { IpcError } from "../../../shared/contracts/workspace.js";
 
+interface SnapshotApplyOptions {
+  activeThreadId?: string | null;
+  openActiveThread?: boolean;
+}
+
 export function createWorkspaceController(client: WorkspaceIpcClient) {
   let latestOpenRequestId = 0;
   let latestSendRequestId = 0;
@@ -38,13 +43,25 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return null;
   }
 
-  async function applySnapshot(snapshot: Parameters<typeof workspaceStore.setSnapshot>[0]): Promise<void> {
-    const activeThreadId = resolveActiveThreadId(snapshot);
+  async function applySnapshot(
+    snapshot: Parameters<typeof workspaceStore.setSnapshot>[0],
+    options: SnapshotApplyOptions = {}
+  ): Promise<void> {
+    const activeThreadId =
+      options.activeThreadId !== undefined
+        ? snapshotHasThread(snapshot, options.activeThreadId)
+          ? options.activeThreadId
+          : null
+        : resolveActiveThreadId(snapshot);
     intendedThreadId = activeThreadId;
     workspaceStore.setSnapshot({
       ...snapshot,
       activeThreadId,
     });
+
+    if (options.openActiveThread === false || !activeThreadId) {
+      return;
+    }
 
     if (activeThreadId) {
       await openThread(activeThreadId);
@@ -78,7 +95,12 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     }
   }
 
-  async function createProject(name: string, isEncrypted?: boolean, password?: string): Promise<string | null> {
+  async function createProject(
+    name: string,
+    isEncrypted?: boolean,
+    password?: string,
+    options?: SnapshotApplyOptions
+  ): Promise<string | null> {
     const currentProjects = new Set(workspaceStore.getState().snapshot?.projects.map(p => p.id) ?? []);
     workspaceStore.setLoading(true);
     const result = await client.createProject(name, isEncrypted, password);
@@ -97,7 +119,7 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
         }
       }
 
-      await applySnapshot(result.data);
+      await applySnapshot(result.data, options);
       return newProject?.id ?? null;
     }
 
@@ -117,12 +139,12 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return false;
   }
 
-  async function createThread(projectId: string): Promise<string | null> {
+  async function createThread(projectId: string, options?: SnapshotApplyOptions): Promise<string | null> {
     workspaceStore.setLoading(true);
     const result = await client.createThread(projectId);
     if (result.success) {
       intendedThreadId = result.data.activeThreadId;
-      await applySnapshot(result.data);
+      await applySnapshot(result.data, options);
       return result.data.activeThreadId;
     }
 
@@ -130,11 +152,16 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return null;
   }
 
-  async function updateProject(projectId: string, name?: string, isCollapsed?: boolean): Promise<boolean> {
+  async function updateProject(
+    projectId: string,
+    name?: string,
+    isCollapsed?: boolean,
+    options?: SnapshotApplyOptions
+  ): Promise<boolean> {
     workspaceStore.setLoading(true);
     const result = await client.updateProject(projectId, name, isCollapsed);
     if (result.success) {
-      await applySnapshot(result.data);
+      await applySnapshot(result.data, options);
       return true;
     }
 
@@ -142,11 +169,15 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return false;
   }
 
-  async function updateThread(threadId: string, title: string): Promise<boolean> {
+  async function updateThread(
+    threadId: string,
+    title: string,
+    options?: SnapshotApplyOptions
+  ): Promise<boolean> {
     workspaceStore.setLoading(true);
     const result = await client.updateThread(threadId, title);
     if (result.success) {
-      await applySnapshot(result.data);
+      await applySnapshot(result.data, options);
       return true;
     }
 

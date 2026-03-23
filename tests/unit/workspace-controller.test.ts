@@ -127,4 +127,270 @@ describe("workspace controller unlock flow", () => {
     expect(state.snapshot?.activeThreadId).toBe("new-thread");
     expect(state.activeThread?.thread.id).toBe("new-thread");
   });
+
+  test("can create a workflow project without reopening an existing active thread", async () => {
+    const openThreadCalls: string[] = [];
+    workspaceStore.setSnapshot({
+      projectGroups: [],
+      projects: [
+        {
+          id: "p1",
+          name: "Existing",
+          sortOrder: 0,
+          groupId: null,
+          isCollapsed: false,
+          isEncrypted: false,
+          isLocked: false,
+          encryptionSalt: null,
+        },
+      ],
+      threadsByProject: {
+        p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+      },
+      activeThreadId: "old-thread",
+    });
+
+    const controller = createWorkspaceController(
+      createClient({
+        createProject: async () => ({
+          success: true,
+          data: {
+            projectGroups: [],
+            projects: [
+              {
+                id: "p1",
+                name: "Existing",
+                sortOrder: 0,
+                groupId: null,
+                isCollapsed: false,
+                isEncrypted: false,
+                isLocked: false,
+                encryptionSalt: null,
+              },
+              {
+                id: "p2",
+                name: "New Project",
+                sortOrder: 1,
+                groupId: null,
+                isCollapsed: false,
+                isEncrypted: false,
+                isLocked: false,
+                encryptionSalt: null,
+              },
+            ],
+            threadsByProject: {
+              p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+              p2: [],
+            },
+            activeThreadId: "old-thread",
+          },
+        }),
+        openThread: async (threadId) => {
+          openThreadCalls.push(threadId);
+          return {
+            success: true,
+            data: {
+              thread: {
+                id: threadId,
+                projectId: "p1",
+                title: "Old",
+                sortOrder: 0,
+                lastMessageAt: null,
+              },
+              messages: [],
+            },
+          };
+        },
+      })
+    );
+
+    const createdProjectId = await controller.createProject("New Project", false, undefined, {
+      activeThreadId: null,
+      openActiveThread: false,
+    });
+    const state = workspaceStore.getState();
+
+    expect(createdProjectId).toBe("p2");
+    expect(state.snapshot?.activeThreadId).toBeNull();
+    expect(state.activeThread).toBeNull();
+    expect(openThreadCalls).toEqual([]);
+  });
+
+  test("can create a workflow thread without opening the composer early", async () => {
+    const openThreadCalls: string[] = [];
+    workspaceStore.setSnapshot({
+      projectGroups: [],
+      projects: [
+        {
+          id: "p1",
+          name: "Project",
+          sortOrder: 0,
+          groupId: null,
+          isCollapsed: false,
+          isEncrypted: false,
+          isLocked: false,
+          encryptionSalt: null,
+        },
+      ],
+      threadsByProject: {
+        p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+      },
+      activeThreadId: "old-thread",
+    });
+
+    const controller = createWorkspaceController(
+      createClient({
+        createThread: async () => ({
+          success: true,
+          data: {
+            projectGroups: [],
+            projects: [
+              {
+                id: "p1",
+                name: "Project",
+                sortOrder: 0,
+                groupId: null,
+                isCollapsed: false,
+                isEncrypted: false,
+                isLocked: false,
+                encryptionSalt: null,
+              },
+            ],
+            threadsByProject: {
+              p1: [
+                { id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null },
+                { id: "new-thread", projectId: "p1", title: "New thread", sortOrder: 1, lastMessageAt: null },
+              ],
+            },
+            activeThreadId: "new-thread",
+          },
+        }),
+        openThread: async (threadId) => {
+          openThreadCalls.push(threadId);
+          return {
+            success: true,
+            data: {
+              thread: {
+                id: threadId,
+                projectId: "p1",
+                title: threadId,
+                sortOrder: threadId === "new-thread" ? 1 : 0,
+                lastMessageAt: null,
+              },
+              messages: [],
+            },
+          };
+        },
+      })
+    );
+
+    const createdThreadId = await controller.createThread("p1", {
+      openActiveThread: false,
+    });
+    const state = workspaceStore.getState();
+
+    expect(createdThreadId).toBe("new-thread");
+    expect(state.snapshot?.activeThreadId).toBe("new-thread");
+    expect(state.activeThread).toBeNull();
+    expect(openThreadCalls).toEqual([]);
+  });
+
+  test("can update a workflow project name without restoring the previous active thread", async () => {
+    const openThreadCalls: string[] = [];
+    workspaceStore.setSnapshot({
+      projectGroups: [],
+      projects: [
+        {
+          id: "p1",
+          name: "Existing",
+          sortOrder: 0,
+          groupId: null,
+          isCollapsed: false,
+          isEncrypted: false,
+          isLocked: false,
+          encryptionSalt: null,
+        },
+        {
+          id: "p2",
+          name: "New Project",
+          sortOrder: 1,
+          groupId: null,
+          isCollapsed: false,
+          isEncrypted: false,
+          isLocked: false,
+          encryptionSalt: null,
+        },
+      ],
+      threadsByProject: {
+        p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+        p2: [],
+      },
+      activeThreadId: "old-thread",
+    });
+
+    const controller = createWorkspaceController(
+      createClient({
+        updateProject: async () => ({
+          success: true,
+          data: {
+            projectGroups: [],
+            projects: [
+              {
+                id: "p1",
+                name: "Existing",
+                sortOrder: 0,
+                groupId: null,
+                isCollapsed: false,
+                isEncrypted: false,
+                isLocked: false,
+                encryptionSalt: null,
+              },
+              {
+                id: "p2",
+                name: "Renamed",
+                sortOrder: 1,
+                groupId: null,
+                isCollapsed: false,
+                isEncrypted: false,
+                isLocked: false,
+                encryptionSalt: null,
+              },
+            ],
+            threadsByProject: {
+              p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+              p2: [],
+            },
+            activeThreadId: "old-thread",
+          },
+        }),
+        openThread: async (threadId) => {
+          openThreadCalls.push(threadId);
+          return {
+            success: true,
+            data: {
+              thread: {
+                id: threadId,
+                projectId: "p1",
+                title: "Old",
+                sortOrder: 0,
+                lastMessageAt: null,
+              },
+              messages: [],
+            },
+          };
+        },
+      })
+    );
+
+    const didUpdate = await controller.updateProject("p2", "Renamed", undefined, {
+      activeThreadId: null,
+      openActiveThread: false,
+    });
+    const state = workspaceStore.getState();
+
+    expect(didUpdate).toBe(true);
+    expect(state.snapshot?.activeThreadId).toBeNull();
+    expect(state.activeThread).toBeNull();
+    expect(openThreadCalls).toEqual([]);
+  });
 });

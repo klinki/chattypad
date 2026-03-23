@@ -7,7 +7,7 @@ import { workspaceStore } from "../../state/workspace-store.js";
 import { createWorkspaceController } from "./workspace-controller.js";
 import { workspaceIpcClient } from "../../ipc/workspace-client.js";
 import { Sidebar } from "../../components/sidebar.js";
-import type { ProjectSummary } from "../../../shared/contracts/workspace.js";
+import type { ProjectSummary, ThreadSummary } from "../../../shared/contracts/workspace.js";
 import {
   WorkspaceShell,
   EmptyState,
@@ -47,7 +47,7 @@ function getWindowMode(): "native" | "frameless" {
 
 type ProjectDialogState =
   | { mode: "closed" }
-  | { mode: "create" }
+  | { mode: "create-encrypted" }
   | { mode: "delete"; project: ProjectSummary };
 
 type UnlockDialogState =
@@ -61,9 +61,11 @@ export function WorkspaceScreen(): React.ReactElement {
     mode: "closed",
   });
   const [projectName, setProjectName] = useState("");
-  const [isEncrypted, setIsEncrypted] = useState(false);
   const [password, setPassword] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [workflowProjectId, setWorkflowProjectId] = useState<string | null>(null);
+  const [workflowThreadId, setWorkflowThreadId] = useState<string | null>(null);
+  const [composerFocusKey, setComposerFocusKey] = useState(0);
   const [unlockDialog, setUnlockDialog] = useState<UnlockDialogState>({ mode: "closed" });
   const [unlockError, setUnlockError] = useState<{ projectId: string; message: string } | null>(null);
 
@@ -136,20 +138,130 @@ export function WorkspaceScreen(): React.ReactElement {
     controller.sendMessage(activeId, state.composeText);
   }, [state.activeThread, state.composeText]);
 
+  const handleSetEditingItemId = useCallback((id: string | null) => {
+    if (id === null) {
+      if (editingItemId === workflowProjectId) {
+        setWorkflowProjectId(null);
+      }
+      if (editingItemId === workflowThreadId) {
+        setWorkflowThreadId(null);
+      }
+    }
+
+    setEditingItemId(id);
+  }, [editingItemId, workflowProjectId, workflowThreadId]);
+
   const handleCreateProject = useCallback(async () => {
-    setProjectDialog({ mode: "create" });
-    setProjectName("");
-    setIsEncrypted(false);
-    setPassword("");
+    const newProjectId = await controller.createProject("New Project", false, undefined, {
+      activeThreadId: null,
+      openActiveThread: false,
+    });
+    if (newProjectId) {
+      setWorkflowProjectId(newProjectId);
+      setWorkflowThreadId(null);
+      setEditingItemId(newProjectId);
+    }
+  }, []);
+
+  const handleCreateEncryptedProject = useCallback(() => {
+    setTimeout(() => {
+      setProjectDialog({ mode: "create-encrypted" });
+      setProjectName("");
+      setPassword("");
+    }, 0);
   }, []);
 
   const handleUpdateProject = useCallback((id: string, name?: string, isCollapsed?: boolean) => {
     controller.updateProject(id, name, isCollapsed);
   }, []);
 
-  const handleUpdateThread = useCallback((id: string, title: string) => {
-    controller.updateThread(id, title);
-  }, []);
+  const handleCommitProjectName = useCallback(async (
+    project: ProjectSummary,
+    name: string,
+    source: "enter" | "blur"
+  ): Promise<boolean> => {
+    const needsUpdate = name !== project.name;
+    if (needsUpdate) {
+      const didUpdate = await controller.updateProject(
+        project.id,
+        name,
+        undefined,
+        workflowProjectId === project.id
+          ? {
+              activeThreadId: null,
+              openActiveThread: false,
+            }
+          : undefined
+      );
+      if (!didUpdate) {
+        return false;
+      }
+    }
+
+    if (workflowProjectId === project.id) {
+      if (source === "blur" && !needsUpdate) {
+        return true;
+      }
+
+      setWorkflowProjectId(null);
+      if (source === "enter") {
+        const newThreadId = await controller.createThread(project.id, {
+          openActiveThread: false,
+        });
+        if (newThreadId) {
+          setWorkflowThreadId(newThreadId);
+          setEditingItemId(newThreadId);
+        } else {
+          setEditingItemId(null);
+        }
+      } else {
+        setEditingItemId(null);
+      }
+      return true;
+    }
+
+    setEditingItemId(null);
+    return true;
+  }, [workflowProjectId]);
+
+  const handleCommitThreadTitle = useCallback(async (
+    thread: ThreadSummary,
+    title: string,
+    source: "enter" | "blur"
+  ): Promise<boolean> => {
+    const needsUpdate = title !== thread.title;
+    if (needsUpdate) {
+      const didUpdate = await controller.updateThread(
+        thread.id,
+        title,
+        workflowThreadId === thread.id
+          ? {
+              openActiveThread: false,
+            }
+          : undefined
+      );
+      if (!didUpdate) {
+        return false;
+      }
+    }
+
+    if (workflowThreadId === thread.id) {
+      if (source === "blur" && !needsUpdate) {
+        return true;
+      }
+
+      setWorkflowThreadId(null);
+      setEditingItemId(null);
+      if (source === "enter") {
+        await controller.openThread(thread.id);
+        setComposerFocusKey((value) => value + 1);
+      }
+      return true;
+    }
+
+    setEditingItemId(null);
+    return true;
+  }, [workflowThreadId]);
 
   const handleMoveProjectToGroup = useCallback((projectId: string, groupId: string | null) => {
     controller.moveProjectToGroup(projectId, groupId);
@@ -168,8 +280,12 @@ export function WorkspaceScreen(): React.ReactElement {
   }, []);
 
   const handleCreateThread = useCallback(async (project: ProjectSummary) => {
-    const newId = await controller.createThread(project.id);
+    const newId = await controller.createThread(project.id, {
+      openActiveThread: false,
+    });
     if (newId) {
+      setWorkflowProjectId(null);
+      setWorkflowThreadId(newId);
       setEditingItemId(newId);
     }
   }, []);
@@ -205,14 +321,13 @@ export function WorkspaceScreen(): React.ReactElement {
   }, [state.isLoading]);
 
   const confirmCreateProject = useCallback(async () => {
-    const didCreate = await controller.createProject(projectName, isEncrypted, password);
+    const didCreate = await controller.createProject(projectName, true, password);
     if (didCreate) {
       setProjectDialog({ mode: "closed" });
       setProjectName("");
-      setIsEncrypted(false);
       setPassword("");
     }
-  }, [projectName, isEncrypted, password]);
+  }, [projectName, password]);
 
   const confirmDeleteProject = useCallback(async () => {
     if (projectDialog.mode !== "delete") {
@@ -237,13 +352,15 @@ export function WorkspaceScreen(): React.ReactElement {
       activeThreadId={state.snapshot?.activeThreadId ?? state.activeThread?.thread.id ?? null}
       isBusy={state.isLoading}
       editingItemId={editingItemId}
-      onSetEditingItemId={setEditingItemId}
+      onSetEditingItemId={handleSetEditingItemId}
       onSelectThread={handleSelectThread}
       onCreateProject={handleCreateProject}
+      onCreateEncryptedProject={handleCreateEncryptedProject}
       onUpdateProject={handleUpdateProject}
+      onCommitProjectName={handleCommitProjectName}
       onCreateThread={handleCreateThread}
       onUnlockProject={openUnlockDialog}
-      onUpdateThread={handleUpdateThread}
+      onCommitThreadTitle={handleCommitThreadTitle}
       onDeleteProject={handleDeleteProject}
       onMoveProjectToGroup={handleMoveProjectToGroup}
       onReorderProject={handleReorderProject}
@@ -282,6 +399,7 @@ export function WorkspaceScreen(): React.ReactElement {
           onChange={(text) => workspaceStore.setComposeText(text)}
           onSend={handleSend}
           sendError={state.sendError}
+          focusRequestKey={composerFocusKey}
           disabled={state.isLoading}
         />
       </>
@@ -306,10 +424,8 @@ export function WorkspaceScreen(): React.ReactElement {
                 dialog={projectDialog}
                 projectName={projectName}
                 isBusy={state.isLoading}
-                isEncrypted={isEncrypted}
                 password={password}
                 onProjectNameChange={setProjectName}
-                onIsEncryptedChange={setIsEncrypted}
                 onPasswordChange={setPassword}
                 onClose={closeProjectDialog}
                 onConfirmCreate={confirmCreateProject}
@@ -345,10 +461,8 @@ interface ProjectDialogProps {
   dialog: ProjectDialogState;
   projectName: string;
   isBusy: boolean;
-  isEncrypted: boolean;
   password?: string;
   onProjectNameChange: (value: string) => void;
-  onIsEncryptedChange: (value: boolean) => void;
   onPasswordChange: (value: string) => void;
   onClose: () => void;
   onConfirmCreate: () => void;
@@ -367,10 +481,8 @@ function ProjectDialog({
   dialog,
   projectName,
   isBusy,
-  isEncrypted,
   password,
   onProjectNameChange,
-  onIsEncryptedChange,
   onPasswordChange,
   onClose,
   onConfirmCreate,
@@ -380,10 +492,34 @@ function ProjectDialog({
     return null;
   }
 
-  const isCreate = dialog.mode === "create";
-  const title = isCreate ? "Create new project" : "Delete project";
+  const isCreate = dialog.mode === "create-encrypted";
+  const title = isCreate ? "Create encrypted project" : "Delete project";
   const confirmLabel = isCreate ? "Create project" : "Delete project";
-  const canSubmit = !isBusy && projectName.trim() !== "" && (!isEncrypted || (password?.length ?? 0) > 0);
+  const canSubmit = isCreate
+    ? !isBusy && projectName.trim() !== "" && (password?.length ?? 0) > 0
+    : !isBusy;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key === "Enter" && canSubmit) {
+        event.preventDefault();
+        if (isCreate) {
+          onConfirmCreate();
+        } else {
+          onConfirmDelete();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canSubmit, dialog.mode, isCreate, onClose, onConfirmCreate, onConfirmDelete]);
 
   return (
     <div
@@ -408,30 +544,17 @@ function ProjectDialog({
               autoFocus
               disabled={isBusy}
             />
-            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, color: "#cdd6f4", fontSize: 14, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={isEncrypted}
-                onChange={(e) => onIsEncryptedChange(e.target.checked)}
-                disabled={isBusy}
-              />
-              Encrypted Project
-            </label>
-            {isEncrypted && (
-              <>
-                <input
-                  type="password"
-                  placeholder="Encryption password"
-                  value={password}
-                  onChange={(e) => onPasswordChange(e.target.value)}
-                  style={dialogInputStyle}
-                  disabled={isBusy}
-                />
-                <p style={{ ...dialogCopyStyle, color: "#f38ba8", fontSize: 12, fontWeight: 600 }}>
-                  ⚠️ DATA IS IRRECOVERABLE: If you lose this password, your notes cannot be decrypted.
-                </p>
-              </>
-            )}
+            <input
+              type="password"
+              placeholder="Encryption password"
+              value={password}
+              onChange={(e) => onPasswordChange(e.target.value)}
+              style={dialogInputStyle}
+              disabled={isBusy}
+            />
+            <p style={{ ...dialogCopyStyle, color: "#f38ba8", fontSize: 12, fontWeight: 600 }}>
+              ⚠️ DATA IS IRRECOVERABLE: If you lose this password, your notes cannot be decrypted.
+            </p>
           </>
         ) : (
           <p style={dialogCopyStyle}>
@@ -536,6 +659,7 @@ const dialogOverlayStyle: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   padding: 24,
+  zIndex: 1100,
 };
 
 const dialogCardStyle: React.CSSProperties = {

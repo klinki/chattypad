@@ -2,7 +2,7 @@
  * Message composer: text input and send button for the active thread.
  * FR-007, FR-008, FR-009: Compose, send, and prevent empty submissions.
  */
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import type { IpcError } from "../../shared/contracts/workspace.js";
 
 interface MessageComposerProps {
@@ -10,6 +10,7 @@ interface MessageComposerProps {
   onChange: (text: string) => void;
   onSend: () => void;
   sendError: IpcError | null;
+  focusRequestKey?: number;
   disabled?: boolean;
 }
 
@@ -18,9 +19,16 @@ export function MessageComposer({
   onChange,
   onSend,
   sendError,
+  focusRequestKey = 0,
   disabled = false,
 }: MessageComposerProps): React.ReactElement {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (focusRequestKey > 0) {
+      textareaRef.current?.focus();
+    }
+  }, [focusRequestKey]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
     if (e.key === "Enter" && !e.shiftKey) {
