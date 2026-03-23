@@ -234,7 +234,7 @@ export function WorkspaceScreen(): React.ReactElement {
       projectGroups={state.snapshot?.projectGroups ?? []}
       projects={state.snapshot?.projects ?? []}
       threadsByProject={state.snapshot?.threadsByProject ?? {}}
-      activeThreadId={state.activeThread?.thread.id ?? null}
+      activeThreadId={state.snapshot?.activeThreadId ?? state.activeThread?.thread.id ?? null}
       isBusy={state.isLoading}
       editingItemId={editingItemId}
       onSetEditingItemId={setEditingItemId}

@@ -61,4 +61,70 @@ describe("workspace controller unlock flow", () => {
     expect(workspaceStore.getState().error).toBeNull();
     expect(workspaceStore.getState().isLoading).toBe(false);
   });
+
+  test("preserves the newly created thread as active when a later snapshot defaults elsewhere", async () => {
+    workspaceStore.setSnapshot({
+      projectGroups: [],
+      projects: [],
+      threadsByProject: {
+        p1: [{ id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null }],
+      },
+      activeThreadId: "old-thread",
+    });
+
+    const controller = createWorkspaceController(
+      createClient({
+        createThread: async () => ({
+          success: true,
+          data: {
+            projectGroups: [],
+            projects: [],
+            threadsByProject: {
+              p1: [
+                { id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null },
+                { id: "new-thread", projectId: "p1", title: "New", sortOrder: 1, lastMessageAt: null },
+              ],
+            },
+            activeThreadId: "new-thread",
+          },
+        }),
+        updateProject: async () => ({
+          success: true,
+          data: {
+            projectGroups: [],
+            projects: [],
+            threadsByProject: {
+              p1: [
+                { id: "old-thread", projectId: "p1", title: "Old", sortOrder: 0, lastMessageAt: null },
+                { id: "new-thread", projectId: "p1", title: "New", sortOrder: 1, lastMessageAt: null },
+              ],
+            },
+            activeThreadId: "old-thread",
+          },
+        }),
+        openThread: async (threadId) => ({
+          success: true,
+          data: {
+            thread: {
+              id: threadId,
+              projectId: "p1",
+              title: threadId === "new-thread" ? "New" : "Old",
+              sortOrder: threadId === "new-thread" ? 1 : 0,
+              lastMessageAt: null,
+            },
+            messages: [],
+          },
+        }),
+      })
+    );
+
+    const createdThreadId = await controller.createThread("p1");
+    const updateResult = await controller.updateProject("p1", undefined, true);
+    const state = workspaceStore.getState();
+
+    expect(createdThreadId).toBe("new-thread");
+    expect(updateResult).toBe(true);
+    expect(state.snapshot?.activeThreadId).toBe("new-thread");
+    expect(state.activeThread?.thread.id).toBe("new-thread");
+  });
 });

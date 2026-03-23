@@ -11,12 +11,43 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
   let latestSendRequestId = 0;
   let intendedThreadId: string | null = null;
 
-  async function applySnapshot(snapshot: Parameters<typeof workspaceStore.setSnapshot>[0]): Promise<void> {
-    intendedThreadId = snapshot.activeThreadId;
-    workspaceStore.setSnapshot(snapshot);
+  function snapshotHasThread(
+    snapshot: Parameters<typeof workspaceStore.setSnapshot>[0],
+    threadId: string | null
+  ): threadId is string {
+    if (!threadId) {
+      return false;
+    }
 
-    if (snapshot.activeThreadId) {
-      await openThread(snapshot.activeThreadId);
+    return Object.values(snapshot.threadsByProject).some((threads) =>
+      threads.some((thread) => thread.id === threadId)
+    );
+  }
+
+  function resolveActiveThreadId(
+    snapshot: Parameters<typeof workspaceStore.setSnapshot>[0]
+  ): string | null {
+    if (snapshotHasThread(snapshot, intendedThreadId)) {
+      return intendedThreadId;
+    }
+
+    if (snapshotHasThread(snapshot, snapshot.activeThreadId)) {
+      return snapshot.activeThreadId;
+    }
+
+    return null;
+  }
+
+  async function applySnapshot(snapshot: Parameters<typeof workspaceStore.setSnapshot>[0]): Promise<void> {
+    const activeThreadId = resolveActiveThreadId(snapshot);
+    intendedThreadId = activeThreadId;
+    workspaceStore.setSnapshot({
+      ...snapshot,
+      activeThreadId,
+    });
+
+    if (activeThreadId) {
+      await openThread(activeThreadId);
     }
   }
 
@@ -87,13 +118,12 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
   }
 
   async function createThread(projectId: string): Promise<string | null> {
-    const currentThreads = new Set((workspaceStore.getState().snapshot?.threadsByProject[projectId] ?? []).map(t => t.id));
     workspaceStore.setLoading(true);
     const result = await client.createThread(projectId);
     if (result.success) {
+      intendedThreadId = result.data.activeThreadId;
       await applySnapshot(result.data);
-      const newThread = (result.data.threadsByProject[projectId] ?? []).find(t => !currentThreads.has(t.id));
-      return newThread?.id ?? null;
+      return result.data.activeThreadId;
     }
 
     workspaceStore.setError(result.error);
