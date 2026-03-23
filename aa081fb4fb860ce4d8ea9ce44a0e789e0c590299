@@ -1,0 +1,29 @@
+src/renderer/features/workspace/workspace-screen.tsx
+  f67a4a18a58d6341 292
+src/renderer/components/workspace-shell.tsx
+  f67a4a18a58d6341 8,15,23,25-27,35,49
+tests/unit/workspace-shell-state.test.ts
+  f67a4a18a58d6341 1-42
+src/renderer/components/workspace-shell-state.ts
+  f67a4a18a58d6341 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "aa081fb4fb860ce4d8ea9ce44a0e789e0c590299",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 677,
+      "total_deletions": 600,
+      "accepted_lines": 677,
+      "overriden_lines": 0
+    }
+  }
+}
