@@ -1,0 +1,25 @@
+src/renderer/features/workspace/workspace-screen.tsx
+  f67a4a18a58d6341 324-328,332-340,503,512-515,535-539
+docs/bugs/008-workflow-improvement-regressions/fix-attempt-002.md
+  f67a4a18a58d6341 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "10c7521756d186f671b8f2ebaadb142e472bfe7e",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 365,
+      "total_deletions": 317,
+      "accepted_lines": 365,
+      "overriden_lines": 0
+    }
+  }
+}
