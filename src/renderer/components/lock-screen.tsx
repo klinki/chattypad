@@ -3,12 +3,14 @@ import React, { useState } from "react";
 interface LockScreenProps {
   projectName: string;
   isBusy: boolean;
+  errorMessage?: string | null;
   onUnlock: (password: string) => void;
 }
 
 export function LockScreen({
   projectName,
   isBusy,
+  errorMessage,
   onUnlock,
 }: LockScreenProps): React.ReactElement {
   const [password, setPassword] = useState("");
@@ -38,6 +40,7 @@ export function LockScreen({
             autoFocus
             disabled={isBusy}
           />
+          {errorMessage ? <div style={errorStyle}>{errorMessage}</div> : null}
           <button
             type="submit"
             disabled={isBusy || password.trim() === ""}
@@ -96,6 +99,14 @@ const inputStyle: React.CSSProperties = {
   fontSize: 16,
   outline: "none",
   marginBottom: 16,
+};
+
+const errorStyle: React.CSSProperties = {
+  marginBottom: 16,
+  color: "#f38ba8",
+  fontSize: 13,
+  lineHeight: 1.4,
+  textAlign: "left",
 };
 
 const buttonStyle: React.CSSProperties = {

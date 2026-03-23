@@ -116,6 +116,10 @@ export const workspaceStore = {
     setState({ error, isLoading: false });
   },
 
+  clearError(): void {
+    setState({ error: null });
+  },
+
   setSendError(sendError: IpcError | null): void {
     setState({ sendError });
   },

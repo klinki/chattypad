@@ -50,6 +50,10 @@ type ProjectDialogState =
   | { mode: "create" }
   | { mode: "delete"; project: ProjectSummary };
 
+type UnlockDialogState =
+  | { mode: "closed" }
+  | { mode: "open"; project: ProjectSummary };
+
 export function WorkspaceScreen(): React.ReactElement {
   const [state, setState] = useState<WorkspaceState>(workspaceStore.getState());
   const [windowMode, setWindowMode] = useState<"native" | "frameless">(getWindowMode());
@@ -60,6 +64,8 @@ export function WorkspaceScreen(): React.ReactElement {
   const [isEncrypted, setIsEncrypted] = useState(false);
   const [password, setPassword] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [unlockDialog, setUnlockDialog] = useState<UnlockDialogState>({ mode: "closed" });
+  const [unlockError, setUnlockError] = useState<{ projectId: string; message: string } | null>(null);
 
   useEffect(() => {
     const unsub = workspaceStore.subscribe(setState);
@@ -168,9 +174,29 @@ export function WorkspaceScreen(): React.ReactElement {
     }
   }, []);
 
-  const handleUnlockProject = useCallback((projectId: string, password: string) => {
-    controller.unlockProject(projectId, password);
+  const handleUnlockProject = useCallback(async (projectId: string, password: string): Promise<boolean> => {
+    const error = await controller.unlockProject(projectId, password);
+    if (error) {
+      setUnlockError({ projectId, message: error.message });
+      return false;
+    }
+
+    setUnlockError(null);
+    setUnlockDialog({ mode: "closed" });
+    return true;
   }, []);
+
+  const openUnlockDialog = useCallback((project: ProjectSummary) => {
+    setUnlockError(null);
+    setUnlockDialog({ mode: "open", project });
+  }, []);
+
+  const closeUnlockDialog = useCallback(() => {
+    if (!state.isLoading) {
+      setUnlockDialog({ mode: "closed" });
+      setUnlockError(null);
+    }
+  }, [state.isLoading]);
 
   const closeProjectDialog = useCallback(() => {
     if (!state.isLoading) {
@@ -216,6 +242,7 @@ export function WorkspaceScreen(): React.ReactElement {
       onCreateProject={handleCreateProject}
       onUpdateProject={handleUpdateProject}
       onCreateThread={handleCreateThread}
+      onUnlockProject={openUnlockDialog}
       onUpdateThread={handleUpdateThread}
       onDeleteProject={handleDeleteProject}
       onMoveProjectToGroup={handleMoveProjectToGroup}
@@ -241,7 +268,10 @@ export function WorkspaceScreen(): React.ReactElement {
       <LockScreen
         projectName={activeProject.name}
         isBusy={state.isLoading}
-        onUnlock={(password) => handleUnlockProject(activeProject.id, password)}
+        errorMessage={unlockError?.projectId === activeProject.id ? unlockError.message : null}
+        onUnlock={(password) => {
+          void handleUnlockProject(activeProject.id, password);
+        }}
       />
     ) : (
       <>
@@ -285,6 +315,21 @@ export function WorkspaceScreen(): React.ReactElement {
                 onConfirmCreate={confirmCreateProject}
                 onConfirmDelete={confirmDeleteProject}
               />
+              <UnlockProjectDialog
+                dialog={unlockDialog}
+                isBusy={state.isLoading}
+                errorMessage={
+                  unlockDialog.mode === "open" && unlockError?.projectId === unlockDialog.project.id
+                    ? unlockError.message
+                    : null
+                }
+                onClose={closeUnlockDialog}
+                onUnlock={(password) => {
+                  if (unlockDialog.mode === "open") {
+                    void handleUnlockProject(unlockDialog.project.id, password);
+                  }
+                }}
+              />
             </>
           }
           isLoading={state.isLoading && state.snapshot === null}
@@ -308,6 +353,14 @@ interface ProjectDialogProps {
   onClose: () => void;
   onConfirmCreate: () => void;
   onConfirmDelete: () => void;
+}
+
+interface UnlockProjectDialogProps {
+  dialog: UnlockDialogState;
+  isBusy: boolean;
+  errorMessage: string | null;
+  onClose: () => void;
+  onUnlock: (password: string) => void;
 }
 
 function ProjectDialog({
@@ -397,6 +450,77 @@ function ProjectDialog({
             style={isCreate ? dialogPrimaryButtonStyle : dialogDangerButtonStyle}
           >
             {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UnlockProjectDialog({
+  dialog,
+  isBusy,
+  errorMessage,
+  onClose,
+  onUnlock,
+}: UnlockProjectDialogProps): React.ReactElement | null {
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (dialog.mode === "open") {
+      setPassword("");
+    }
+  }, [dialog]);
+
+  if (dialog.mode === "closed") {
+    return null;
+  }
+
+  const canSubmit = !isBusy && password.trim() !== "";
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="unlock-project-dialog-title"
+      style={dialogOverlayStyle}
+      onClick={onClose}
+    >
+      <div style={dialogCardStyle} onClick={(event) => event.stopPropagation()}>
+        <h2 id="unlock-project-dialog-title" style={dialogTitleStyle}>
+          Unlock project
+        </h2>
+        <p style={dialogCopyStyle}>
+          Enter the password for <strong>{dialog.project.name}</strong> to unlock its contents.
+        </p>
+        <input
+          type="password"
+          placeholder="Encryption password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          style={dialogInputStyle}
+          autoFocus
+          disabled={isBusy}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && canSubmit) {
+              onUnlock(password);
+            }
+          }}
+        />
+        {errorMessage ? (
+          <p style={{ ...dialogCopyStyle, color: "#f38ba8", marginTop: 12 }}>{errorMessage}</p>
+        ) : null}
+        <div style={dialogActionsStyle}>
+          <button type="button" onClick={onClose} disabled={isBusy} style={dialogSecondaryButtonStyle}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onUnlock(password)}
+            disabled={!canSubmit}
+            style={dialogPrimaryButtonStyle}
+          >
+            Unlock
           </button>
         </div>
       </div>

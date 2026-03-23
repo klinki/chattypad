@@ -4,6 +4,7 @@
  */
 import { workspaceStore } from "../../state/workspace-store.js";
 import type { WorkspaceIpcClient } from "../../ipc/workspace-client.js";
+import type { IpcError } from "../../../shared/contracts/workspace.js";
 
 export function createWorkspaceController(client: WorkspaceIpcClient) {
   let latestOpenRequestId = 0;
@@ -156,8 +157,9 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     return false;
   }
 
-  async function unlockProject(projectId: string, password: string): Promise<boolean> {
+  async function unlockProject(projectId: string, password: string): Promise<IpcError | null> {
     const startTime = performance.now();
+    workspaceStore.clearError();
     workspaceStore.setLoading(true);
     const result = await client.unlockProject(projectId, password);
     if (result.success) {
@@ -180,16 +182,21 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
         await applySnapshot(workspaceResult.data);
       } else {
         workspaceStore.setError(workspaceResult.error);
-        return false;
+        return workspaceResult.error;
       }
 
       const endTime = performance.now();
       console.log(`[performance] Project unlock took ${(endTime - startTime).toFixed(2)}ms`);
-      return true;
+      return null;
+    }
+
+    if (result.error.recoverable) {
+      workspaceStore.setLoading(false);
+      return result.error;
     }
 
     workspaceStore.setError(result.error);
-    return false;
+    return result.error;
   }
 
   async function lockProject(projectId: string): Promise<void> {

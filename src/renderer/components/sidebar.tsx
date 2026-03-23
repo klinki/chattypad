@@ -22,6 +22,7 @@ interface SidebarProps {
   onCreateProject: () => void;
   onUpdateProject: (id: string, name?: string, isCollapsed?: boolean) => void;
   onCreateThread: (project: ProjectSummary) => void;
+  onUnlockProject?: (project: ProjectSummary) => void;
   onUpdateThread: (id: string, title: string) => void;
   onDeleteProject: (project: ProjectSummary) => void;
   onMoveProjectToGroup?: (projectId: string, groupId: string | null) => void;
@@ -295,12 +296,37 @@ function ProjectItem({ project, props, setContextMenu }: any) {
         )}
         
         {project.isEncrypted && (
-          <div
-            title={project.isLocked ? "Project is locked" : "Project is encrypted"}
-            style={{ fontSize: 12, color: project.isLocked ? "#f38ba8" : "#a6adc8", opacity: 0.8 }}
-          >
-            {project.isLocked ? "🔒" : "🔓"}
-          </div>
+          project.isLocked ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onUnlockProject?.(project);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              disabled={props.isBusy}
+              title="Unlock project"
+              aria-label={`Unlock ${project.name}`}
+              style={{
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                fontSize: 12,
+                color: "#f38ba8",
+                opacity: props.isBusy ? 0.5 : 0.8,
+                cursor: props.isBusy ? "not-allowed" : "pointer",
+              }}
+            >
+              🔒
+            </button>
+          ) : (
+            <div
+              title="Project is encrypted"
+              style={{ fontSize: 12, color: "#a6adc8", opacity: 0.8 }}
+            >
+              🔓
+            </div>
+          )
         )}
 
         {!isEditingProject && (
