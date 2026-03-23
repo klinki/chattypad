@@ -1,10 +1,14 @@
+import { createRequire } from "node:module";
 import type { ElectrobunConfig } from "electrobun";
+
+const require = createRequire(import.meta.url);
+const { version } = require("./package.json") as { version: string };
 
 export default {
   app: {
     name: "chattypad",
     identifier: "chattypad.electrobun.dev",
-    version: "0.1.0",
+    version,
   },
   build: {
     bun: {
