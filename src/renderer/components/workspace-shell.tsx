@@ -5,12 +5,14 @@
  */
 import React from "react";
 import type { IpcError } from "../../shared/contracts/workspace.js";
+import { getWorkspaceShellRenderMode } from "./workspace-shell-state.js";
 
 interface WorkspaceShellProps {
   sidebar: React.ReactNode;
   main: React.ReactNode;
   isLoading: boolean;
   error: IpcError | null;
+  hasSnapshot: boolean;
 }
 
 export function WorkspaceShell({
@@ -18,8 +20,11 @@ export function WorkspaceShell({
   main,
   isLoading,
   error,
+  hasSnapshot,
 }: WorkspaceShellProps): React.ReactElement {
-  if (isLoading) {
+  const renderMode = getWorkspaceShellRenderMode({ isLoading, error, hasSnapshot });
+
+  if (renderMode === "loading") {
     return (
       <div style={containerStyle}>
         <LoadingState />
@@ -27,7 +32,7 @@ export function WorkspaceShell({
     );
   }
 
-  if (error) {
+  if (renderMode === "full-error" && error) {
     return (
       <div style={containerStyle}>
         <ErrorState error={error} />
@@ -41,7 +46,7 @@ export function WorkspaceShell({
       <main
         style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}
       >
-        {main}
+        {renderMode === "shell-with-main-error" && error ? <ErrorState error={error} /> : main}
       </main>
     </div>
   );

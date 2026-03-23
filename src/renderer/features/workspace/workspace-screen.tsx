@@ -289,6 +289,7 @@ export function WorkspaceScreen(): React.ReactElement {
           }
           isLoading={state.isLoading && state.snapshot === null}
           error={state.error}
+          hasSnapshot={state.snapshot !== null}
         />
       </div>
     </div>
