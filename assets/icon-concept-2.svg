@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0D0D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A1A2E;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D2FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7B68EE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glow2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00D2FF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#7B68EE;stop-opacity:0.1" />
+    </linearGradient>
+    <filter id="neon" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark rounded square background -->
+  <rect x="32" y="32" width="448" height="448" rx="96" ry="96" fill="url(#bg2)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.06">
+    <line x1="132" y1="80" x2="132" y2="432" stroke="white" stroke-width="1"/>
+    <line x1="212" y1="80" x2="212" y2="432" stroke="white" stroke-width="1"/>
+    <line x1="292" y1="80" x2="292" y2="432" stroke="white" stroke-width="1"/>
+    <line x1="372" y1="80" x2="372" y2="432" stroke="white" stroke-width="1"/>
+    <line x1="80" y1="132" x2="432" y2="132" stroke="white" stroke-width="1"/>
+    <line x1="80" y1="212" x2="432" y2="212" stroke="white" stroke-width="1"/>
+    <line x1="80" y1="292" x2="432" y2="292" stroke="white" stroke-width="1"/>
+    <line x1="80" y1="372" x2="432" y2="372" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Main chat-document shape: a document that morphs into a speech bubble -->
+  <g filter="url(#neon)">
+    <!-- Document/page shape with speech tail -->
+    <path d="
+      M 150 110
+      L 340 110
+      Q 362 110, 362 132
+      L 362 340
+      Q 362 362, 340 362
+      L 240 362
+      L 200 412
+      L 195 362
+      L 172 362
+      Q 150 362, 150 340
+      Z
+    " fill="none" stroke="url(#accent2)" stroke-width="6" stroke-linejoin="round"/>
+
+    <!-- Folded corner -->
+    <path d="M 310 110 L 362 162" stroke="url(#accent2)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 310 110 L 310 155 Q 310 162, 317 162 L 362 162" fill="url(#glow2)" stroke="url(#accent2)" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Text lines inside (neon style) -->
+  <g filter="url(#neon)">
+    <line x1="185" y1="190" x2="330" y2="190" stroke="url(#accent2)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+    <line x1="185" y1="225" x2="310" y2="225" stroke="url(#accent2)" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+    <line x1="185" y1="260" x2="325" y2="260" stroke="url(#accent2)" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+    <line x1="185" y1="295" x2="280" y2="295" stroke="url(#accent2)" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+  </g>
+
+  <!-- Cursor/caret blinking indicator -->
+  <rect x="185" y="318" width="3" height="22" rx="1.5" fill="#00D2FF" opacity="0.9">
+  </rect>
+</svg>
