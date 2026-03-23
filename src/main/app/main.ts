@@ -11,6 +11,8 @@ import {
   createWorkspaceRpcRequestHandlers,
   type WorkspaceRpcRequestHandlers,
 } from "../ipc/workspace-ipc.js";
+import { SettingsManager } from "./settings.js";
+import { createSettingsRpcRequestHandlers } from "../ipc/settings.js";
 import { resolveWindowConfig, type WindowMode } from "./window-config.js";
 
 import { IPC_CHANNELS as CHANNELS } from "../../shared/contracts/workspace.js";
@@ -137,15 +139,22 @@ async function loadElectrobunRuntime(): Promise<ElectrobunRuntimeModule | null> 
 }
 
 async function bootstrap(): Promise<void> {
+  logStartup("Bootstrapping ChattyPad", debugStartupEnabled ? `cwd=${process.cwd()}` : undefined);
+
+  logStartup("Loading settings");
+  const settingsManager = new SettingsManager();
+  const settings = await settingsManager.load();
   logStartup(
-    "Bootstrapping ChattyPad",
+    "Settings loaded",
     debugStartupEnabled
-      ? `cwd=${process.cwd()}\ndatabase=${resolveDatabasePath()}`
+      ? `settings=${settingsManager.getSettingsPath()}\ndatabase=${resolveDatabasePath(
+          settings.general.databaseDir
+        )}`
       : undefined
   );
 
   logStartup("Opening SQLite database");
-  const db = getDatabase();
+  const db = getDatabase(settings.general.databaseDir);
   logStartup("SQLite database ready");
 
   logStartup("Initializing database schema");
@@ -157,6 +166,7 @@ async function bootstrap(): Promise<void> {
 
   logStartup("Creating workspace RPC request handlers");
   const workspaceRequestHandlers = createWorkspaceRpcRequestHandlers(db);
+  const settingsRequestHandlers = createSettingsRpcRequestHandlers(settingsManager);
 
   if (!electrobunRuntime) {
     throw new Error(
@@ -171,6 +181,7 @@ async function bootstrap(): Promise<void> {
   logStartup("Defining Electrobun RPC bridge");
   const requestHandlers = {
     ...workspaceRequestHandlers,
+    ...settingsRequestHandlers,
     [CHANNELS.WINDOW_GET_FRAME]: () => {
       if (!mainWindow?.getFrame) {
         return createWindowUnavailableResult();

@@ -39,6 +39,7 @@ interface SidebarProps {
   onReorderProject?: (projectId: string, targetSortOrder: number) => void;
   onReorderThread?: (threadId: string, targetSortOrder: number) => void;
   onLockAllProjects?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function Sidebar(props: SidebarProps): React.ReactElement {
@@ -135,6 +136,15 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
           Workspace
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={props.onOpenSettings}
+            disabled={props.isBusy}
+            title="Open settings"
+            style={{ ...actionButtonStyle, padding: "4px 8px", fontSize: 12 }}
+          >
+            Settings
+          </button>
           <button
             type="button"
             onClick={props.onLockAllProjects}

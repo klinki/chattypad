@@ -18,6 +18,7 @@ import { MessageHistory } from "../../components/message-history.js";
 import { Header } from "../../components/header.js";
 import { MessageComposer } from "../../components/message-composer.js";
 import { LockScreen } from "../../components/lock-screen.js";
+import { SettingsDialog } from "../../components/settings-dialog.js";
 import { WindowResizeHandles } from "../../components/window-resize-handles.js";
 import type { WorkspaceState } from "../../state/workspace-store.js";
 
@@ -63,6 +64,7 @@ export function WorkspaceScreen(): React.ReactElement {
   const [projectName, setProjectName] = useState("");
   const [password, setPassword] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [isSettingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [workflowProjectId, setWorkflowProjectId] = useState<string | null>(null);
   const [workflowThreadId, setWorkflowThreadId] = useState<string | null>(null);
   const [composerFocusKey, setComposerFocusKey] = useState(0);
@@ -378,6 +380,7 @@ export function WorkspaceScreen(): React.ReactElement {
       onReorderProject={handleReorderProject}
       onReorderThread={handleReorderThread}
       onLockAllProjects={handleLockAllProjects}
+      onOpenSettings={() => setSettingsDialogOpen(true)}
     />
   );
 
@@ -455,6 +458,14 @@ export function WorkspaceScreen(): React.ReactElement {
                 onUnlock={(password) => {
                   if (unlockDialog.mode === "open") {
                     void handleUnlockProject(unlockDialog.project.id, password);
+                  }
+                }}
+              />
+              <SettingsDialog
+                isOpen={isSettingsDialogOpen}
+                onClose={() => {
+                  if (!state.isLoading) {
+                    setSettingsDialogOpen(false);
                   }
                 }}
               />

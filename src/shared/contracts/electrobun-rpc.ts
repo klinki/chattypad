@@ -18,6 +18,8 @@ import type {
   WindowFrameUpdateRequest,
 } from "./workspace.js";
 import { IPC_CHANNELS } from "./workspace.js";
+import type { Settings, SettingsUpdateRequest } from "./settings.js";
+import { SETTINGS_IPC_CHANNELS } from "./settings.js";
 
 export interface ThreadOpenRequest {
   threadId: string;
@@ -109,6 +111,14 @@ export interface WorkspaceElectrobunRpcSchema {
       [IPC_CHANNELS.WINDOW_SET_FRAME]: {
         params: WindowFrameUpdateRequest;
         response: IpcResult<WindowFrame>;
+      };
+      [SETTINGS_IPC_CHANNELS.SETTINGS_GET]: {
+        params: undefined;
+        response: IpcResult<Settings>;
+      };
+      [SETTINGS_IPC_CHANNELS.SETTINGS_UPDATE]: {
+        params: SettingsUpdateRequest;
+        response: IpcResult<Settings>;
       };
     };
     messages: {

@@ -5,6 +5,7 @@
 import { Database } from "bun:sqlite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { DEFAULT_DATABASE_FILENAME } from "../app/settings.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,9 +21,9 @@ const CORRUPT_DATABASE_PATTERNS = [
  * Returns the shared application database instance.
  * Creates the database file at the given path (or a default path) if it does not exist.
  */
-export function getDatabase(dbPath?: string): Database {
+export function getDatabase(databaseDir?: string): Database {
   if (!sharedDb) {
-    const resolvedPath = resolveDatabasePath(dbPath);
+    const resolvedPath = resolveDatabasePath(databaseDir);
     try {
       sharedDb = new Database(resolvedPath, { create: true });
       configurePragmas(sharedDb);
@@ -52,8 +53,12 @@ export function createTestDatabase(): Database {
   return db;
 }
 
-export function resolveDatabasePath(dbPath?: string): string {
-  return dbPath ?? path.resolve(__dirname, "../../../chattypad.db");
+export function resolveDatabasePath(databaseDir?: string): string {
+  if (!databaseDir) {
+    return path.resolve(__dirname, "../../../chattypad.db");
+  }
+
+  return path.resolve(databaseDir, DEFAULT_DATABASE_FILENAME);
 }
 
 export function toDatabaseError(
