@@ -174,13 +174,15 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
           console.error("[controller] Failed to derive key after unlock:", err);
         }
       }
-      
-      // Re-open active thread if it was in this project
-      if (state.snapshot?.activeThreadId) {
-        await openThread(state.snapshot.activeThreadId);
+
+      const workspaceResult = await client.loadWorkspace();
+      if (workspaceResult.success) {
+        await applySnapshot(workspaceResult.data);
       } else {
-        workspaceStore.setLoading(false);
+        workspaceStore.setError(workspaceResult.error);
+        return false;
       }
+
       const endTime = performance.now();
       console.log(`[performance] Project unlock took ${(endTime - startTime).toFixed(2)}ms`);
       return true;

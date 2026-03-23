@@ -22,9 +22,9 @@ afterEach(() => {
 });
 
 describe("workspace:load handler (US1)", () => {
-  test("returns a WorkspaceSnapshot with projects and threads", () => {
+  test("returns a WorkspaceSnapshot with projects and threads", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleWorkspaceLoad();
+    const result = await handlers.handleWorkspaceLoad();
 
     expect(result.success).toBe(true);
     if (!result.success) {
@@ -37,11 +37,11 @@ describe("workspace:load handler (US1)", () => {
     }
   });
 
-  test("returns empty collections when no data exists (FR-012)", () => {
+  test("returns empty collections when no data exists (FR-012)", async () => {
     const emptyDb = createTestDatabase();
     initializeSchema(emptyDb);
     const handlers = createWorkspaceHandlers(emptyDb);
-    const result = handlers.handleWorkspaceLoad();
+    const result = await handlers.handleWorkspaceLoad();
 
     expect(result.success).toBe(true);
     if (!result.success) {
@@ -54,9 +54,9 @@ describe("workspace:load handler (US1)", () => {
     emptyDb.close();
   });
 
-  test("projects are returned with required fields (ProjectSummary shape)", () => {
+  test("projects are returned with required fields (ProjectSummary shape)", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleWorkspaceLoad();
+    const result = await handlers.handleWorkspaceLoad();
     expect(result.success).toBe(true);
     if (!result.success) {
       return;
@@ -86,7 +86,7 @@ describe("project handlers", () => {
 
   test("project:delete removes the project and its threads from the workspace snapshot", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleProjectDelete("proj-001");
+    const result = await handlers.handleProjectDelete("proj-001");
 
     expect(result.success).toBe(true);
     if (!result.success) {
@@ -97,9 +97,9 @@ describe("project handlers", () => {
     expect(result.data.threadsByProject["proj-001"]).toBeUndefined();
   });
 
-  test("project:delete returns a recoverable error for unknown projects", () => {
+  test("project:delete returns a recoverable error for unknown projects", async () => {
     const handlers = createWorkspaceHandlers(db);
-    const result = handlers.handleProjectDelete("proj-missing");
+    const result = await handlers.handleProjectDelete("proj-missing");
 
     expect(result.success).toBe(false);
     if (result.success) {

@@ -2,18 +2,15 @@ import { expect, test, describe } from "bun:test";
 import { CryptoService } from "../../src/shared/crypto/crypto-service.js";
 
 describe("CryptoService", () => {
-  test("should derive keys consistently from same password and salt", async () => {
+  test("should derive compatible keys from the same password and salt", async () => {
     const password = "test-password";
     const salt = CryptoService.generateSalt();
 
     const key1 = await CryptoService.deriveKey(password, salt);
     const key2 = await CryptoService.deriveKey(password, salt);
+    const encrypted = await CryptoService.encrypt("same secret", key1);
 
-    // Export keys to compare their raw bytes
-    const exported1 = await crypto.subtle.exportKey("raw", key1);
-    const exported2 = await crypto.subtle.exportKey("raw", key2);
-
-    expect(new Uint8Array(exported1)).toEqual(new Uint8Array(exported2));
+    await expect(CryptoService.decrypt(encrypted, key2)).resolves.toBe("same secret");
   });
 
   test("should encrypt and decrypt correctly", async () => {

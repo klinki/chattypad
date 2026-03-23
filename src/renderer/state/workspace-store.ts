@@ -47,11 +47,12 @@ function updateActiveThreadSummary(detail: ActiveThreadDetail): WorkspaceSnapsho
   }
 
   const projectThreads = state.snapshot.threadsByProject[detail.thread.projectId] ?? [];
-  const updatedThreads = projectThreads.map((thread) =>
-    thread.id === detail.thread.id
-      ? { ...thread, lastMessageAt: detail.thread.lastMessageAt }
-      : thread
-  );
+  const threadExists = projectThreads.some((thread) => thread.id === detail.thread.id);
+  const updatedThreads = threadExists
+    ? projectThreads.map((thread) =>
+        thread.id === detail.thread.id ? { ...thread, ...detail.thread } : thread
+      )
+    : [...projectThreads, detail.thread];
 
   return {
     ...state.snapshot,
@@ -60,6 +61,19 @@ function updateActiveThreadSummary(detail: ActiveThreadDetail): WorkspaceSnapsho
       ...state.snapshot.threadsByProject,
       [detail.thread.projectId]: updatedThreads,
     },
+  };
+}
+
+function updateProjectLockState(projectId: string, isLocked: boolean): WorkspaceSnapshot | null {
+  if (!state.snapshot) {
+    return null;
+  }
+
+  return {
+    ...state.snapshot,
+    projects: state.snapshot.projects.map((project) =>
+      project.id === projectId ? { ...project, isLocked } : project
+    ),
   };
 }
 
@@ -121,6 +135,7 @@ export const workspaceStore = {
 
   setUnlockedKey(projectId: string, key: CryptoKey): void {
     setState({
+      snapshot: updateProjectLockState(projectId, false) ?? state.snapshot,
       unlockedKeys: { ...state.unlockedKeys, [projectId]: key },
     });
   },
@@ -128,6 +143,7 @@ export const workspaceStore = {
   lockProject(projectId: string): void {
     const { [projectId]: _, ...remainingKeys } = state.unlockedKeys;
     setState({
+      snapshot: updateProjectLockState(projectId, true) ?? state.snapshot,
       unlockedKeys: remainingKeys,
       // If the active thread is in this project, clear it
       activeThread: state.activeThread?.thread.projectId === projectId ? null : state.activeThread,
@@ -136,6 +152,14 @@ export const workspaceStore = {
 
   lockAllProjects(): void {
     setState({
+      snapshot: state.snapshot
+        ? {
+            ...state.snapshot,
+            projects: state.snapshot.projects.map((project) =>
+              project.isEncrypted ? { ...project, isLocked: true } : project
+            ),
+          }
+        : null,
       unlockedKeys: {},
       activeThread: null,
     });

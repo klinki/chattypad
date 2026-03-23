@@ -22,7 +22,7 @@ import type {
   IpcError,
 } from "../../shared/contracts/workspace.js";
 import { DatabaseError, toDatabaseError } from "../database/sqlite.js";
-import { sessionKeys } from "./workspace-service.js";
+import { decryptThreadTitleForDisplay, sessionKeys } from "./workspace-service.js";
 import { CryptoService } from "../../shared/crypto/crypto-service.js";
 
 export interface SendMessageInput {
@@ -162,11 +162,7 @@ export async function sendMessage(
 
     let threadTitle = updatedThread.title;
     if (project?.isEncrypted && key) {
-      try {
-        threadTitle = await CryptoService.decrypt(updatedThread.title, key);
-      } catch (err) {
-        threadTitle = "[Encrypted Content]";
-      }
+      threadTitle = await decryptThreadTitleForDisplay(updatedThread.title, key);
     }
 
     return {

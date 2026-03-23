@@ -40,6 +40,29 @@ import { CryptoService } from "../../shared/crypto/crypto-service.js";
 
 export const sessionKeys = new Map<string, CryptoKey>();
 
+const ENCRYPTED_CONTENT_PLACEHOLDER = "[Encrypted Content]";
+
+function looksLikeEncryptedPayload(value: string): boolean {
+  try {
+    return CryptoService.base64ToUint8Array(value).byteLength >= 28;
+  } catch {
+    return false;
+  }
+}
+
+export async function decryptThreadTitleForDisplay(
+  storedTitle: string,
+  key: CryptoKey
+): Promise<string> {
+  try {
+    return await CryptoService.decrypt(storedTitle, key);
+  } catch {
+    return looksLikeEncryptedPayload(storedTitle)
+      ? ENCRYPTED_CONTENT_PLACEHOLDER
+      : storedTitle;
+  }
+}
+
 function getInitialActiveThreadId(db: Database, projectIds: string[]): string | null {
   for (const projectId of projectIds) {
     const firstThread = getAllThreadsByProject(db, projectId)[0];
@@ -70,11 +93,7 @@ async function buildWorkspaceSnapshotWithActiveThread(
     const threadSummaries = await Promise.all(threads.map(async (t) => {
       let title = t.title;
       if (project.isEncrypted && key) {
-        try {
-          title = await CryptoService.decrypt(t.title, key);
-        } catch (err) {
-          title = "[Encrypted Content]";
-        }
+        title = await decryptThreadTitleForDisplay(t.title, key);
       }
       return {
         ...threadToSummary(t),
@@ -312,12 +331,7 @@ export async function openThread(
     
     let threadTitle = thread.title;
     if (project?.isEncrypted && key) {
-      try {
-        threadTitle = await CryptoService.decrypt(thread.title, key);
-      } catch (err) {
-        console.error("Failed to decrypt thread title", err);
-        threadTitle = "[Encrypted Content]";
-      }
+      threadTitle = await decryptThreadTitleForDisplay(thread.title, key);
     }
 
     const messageViews = await Promise.all(messages.map(async (m) => {
@@ -327,7 +341,7 @@ export async function openThread(
           content = await CryptoService.decrypt(m.content, key);
         } catch (err) {
           console.error("Failed to decrypt message content", err);
-          content = "[Encrypted Content]";
+          content = ENCRYPTED_CONTENT_PLACEHOLDER;
         }
       }
       return {
@@ -458,7 +472,24 @@ export async function updateThread(
   title: string
 ): Promise<IpcResult<WorkspaceSnapshot>> {
   return withIpcErrorAsync(async () => {
-    updateThreadTitle(db, threadId, title);
+    const thread = getThreadById(db, threadId);
+    if (!thread) {
+      throw new Error(`Thread not found: ${threadId}`);
+    }
+
+    const project = getProjectById(db, thread.projectId);
+    const key = sessionKeys.get(thread.projectId);
+    let titleToStore = title;
+
+    if (project?.isEncrypted) {
+      if (!key) {
+        throw new Error("Project is locked.");
+      }
+
+      titleToStore = await CryptoService.encrypt(title, key);
+    }
+
+    updateThreadTitle(db, threadId, titleToStore);
     return buildWorkspaceSnapshot(db);
   }, {
     fallbackCode: "THREAD_UPDATE_FAILED",

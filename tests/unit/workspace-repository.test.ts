@@ -117,6 +117,7 @@ describe("Project repository", () => {
       isCollapsed: false,
       isEncrypted: false,
       isLocked: false,
+      encryptionSalt: null,
     });
   });
 

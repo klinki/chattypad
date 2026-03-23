@@ -1,16 +1,16 @@
-# Status: Encrypted thread title displayed in sidebar
+# Bug Status
 
-**Status**: Fixed
-**Date**: 2026-03-19
+## Current State
+- fixed
 
-## Summary
-The sidebar was displaying raw encrypted Base64 strings instead of decrypted thread titles because the snapshot generation was synchronous and lacked decryption logic. This was also causing a frontend crash when the renderer received unresolved `Promise` objects.
+## Confirmation Date
+- 2026-03-23
 
-## Resolution
-- Refactored the entire backend snapshot generation to be asynchronous.
-- Added in-memory decryption for thread titles in the sidebar.
-- Fixed frontend `TypeError` by adding defensive guards and optional chaining.
+## Resolution Summary
+- A previous attempt was marked fixed on 2026-03-19, but the bug is still present in the current codebase.
+- Investigation reopened on 2026-03-23 after confirming the renderer keeps stale placeholder titles after unlock.
+- User confirmed on 2026-03-23 that encrypted project titles now recover correctly after unlock.
 
-## Verification
-- [x] Verified thread titles in the sidebar are human-readable when the project is unlocked.
-- [x] Verified the application no longer crashes when opening or creating threads.
+## Notes
+- Local verification passed on 2026-03-23 with `bun test` and `npm run lint`.
+- Renderer snapshot synchronization and encrypted-title persistence were both repaired as part of the final fix.

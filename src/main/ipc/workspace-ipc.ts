@@ -213,14 +213,6 @@ function normalizeThreadCreateRequest(
   };
 }
 
-function normalizeProjectDeleteRequest(
-  payload?: ProjectDeleteRequest
-): ProjectDeleteRequest {
-  return {
-    projectId: typeof payload?.projectId === "string" ? payload.projectId : "",
-  };
-}
-
 /**
  * Builds the Electrobun request handler map from the plain workspace handlers.
  */

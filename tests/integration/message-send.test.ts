@@ -91,7 +91,7 @@ describe("message:send IPC handler (US3)", () => {
   test("workspace load after send still shows the updated thread", async () => {
     const handlers = createWorkspaceHandlers(db);
     await handlers.handleMessageSend("t1", "New message", "user");
-    const loadResult = handlers.handleWorkspaceLoad();
+    const loadResult = await handlers.handleWorkspaceLoad();
     expect(loadResult.success).toBe(true);
     if (!loadResult.success) {
       return;
