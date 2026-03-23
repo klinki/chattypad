@@ -1,0 +1,27 @@
+tests/unit/workspace-controller.test.ts
+  f67a4a18a58d6341 64-129
+src/renderer/features/workspace/workspace-controller.ts
+  f67a4a18a58d6341 14-32,34-50,124,126
+src/renderer/features/workspace/workspace-screen.tsx
+  f67a4a18a58d6341 237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "8ffeca6afae8d1547087b857433394a5376a5405",
+  "prompts": {
+    "f67a4a18a58d6341": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d19c9-d96a-7471-ae77-55f8647b4dfa",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 540,
+      "total_deletions": 444,
+      "accepted_lines": 540,
+      "overriden_lines": 0
+    }
+  }
+}
