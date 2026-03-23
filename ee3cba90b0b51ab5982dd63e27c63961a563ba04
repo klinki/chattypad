@@ -1,0 +1,50 @@
+specs/005-settings-dialog/tasks.md
+  01f4fa30e9bd1941 20-21,29-30,44-47,61-63,77-80,90-91
+  fbd92f4cb9ce72fb 1-19,22-28,31-43,48-60,64-76,81-89,92-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "ee3cba90b0b51ab5982dd63e27c63961a563ba04",
+  "prompts": {
+    "01f4fa30e9bd1941": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d029a-9a43-73c1-96bf-1afd8c724942",
+        "model": "gpt-5.4"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 17,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    },
+    "cd2ded255114204d": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "9f663f8d-79ac-42e7-9961-53887047d420",
+        "model": "gemini-3-flash-preview"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 135,
+      "total_deletions": 0,
+      "accepted_lines": 135,
+      "overriden_lines": 0
+    },
+    "fbd92f4cb9ce72fb": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "28c8d205-f865-4193-8e11-5bfa0f532ab9",
+        "model": "gemini-3-flash-preview"
+      },
+      "human_author": "David Klingenberg <dklingenberg@gmail.com>",
+      "messages": [],
+      "total_additions": 333,
+      "total_deletions": 73,
+      "accepted_lines": 316,
+      "overriden_lines": 0
+    }
+  }
+}
