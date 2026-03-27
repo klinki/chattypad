@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.1](https://github.com/klinki/chattypad/compare/chattypad-v0.0.0...chattypad-v0.0.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* Fix initial version ([d1bbd8e](https://github.com/klinki/chattypad/commit/d1bbd8e9de0a2e27d6eff45b1b441d0a9f91a956))
+
 ## 0.0.0 (2026-03-27)
 
 
