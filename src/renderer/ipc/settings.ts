@@ -30,6 +30,8 @@ type SettingsRpcRequestProxy = {
 };
 
 let bridge: SettingsRpcRequestProxy | null | undefined;
+let settingsSnapshot: Settings | null = null;
+let settingsLoadPromise: Promise<IpcResult<Settings>> | null = null;
 
 function hasElectrobunRuntime(): boolean {
   if (typeof window === "undefined") {
@@ -84,6 +86,25 @@ function unavailableBridgeResult<T>(): IpcResult<T> {
   };
 }
 
+function cacheSettingsResult(result: IpcResult<Settings>): void {
+  if (result.success) {
+    settingsSnapshot = result.data;
+  }
+}
+
+function loadSettings(): Promise<IpcResult<Settings>> {
+  if (!settingsLoadPromise) {
+    settingsLoadPromise = invokeIpc(SETTINGS_IPC_CHANNELS.SETTINGS_GET).then((result) => {
+      cacheSettingsResult(result);
+      return result;
+    }).finally(() => {
+      settingsLoadPromise = null;
+    });
+  }
+
+  return settingsLoadPromise;
+}
+
 async function invokeIpc<Channel extends SettingsChannel>(
   channel: Channel,
   payload?: SettingsRequestMap[Channel]["params"]
@@ -102,7 +123,14 @@ async function invokeIpc<Channel extends SettingsChannel>(
 }
 
 export const settingsIpcClient: SettingsIpcClient = {
-  getSettings: () => invokeIpc(SETTINGS_IPC_CHANNELS.SETTINGS_GET),
-  updateSettings: (partialSettings) =>
-    invokeIpc(SETTINGS_IPC_CHANNELS.SETTINGS_UPDATE, partialSettings),
+  getSettings: () => loadSettings(),
+  updateSettings: async (partialSettings) => {
+    const result = await invokeIpc(SETTINGS_IPC_CHANNELS.SETTINGS_UPDATE, partialSettings);
+    cacheSettingsResult(result);
+    return result;
+  },
 };
+
+export function getCachedSettings(): Settings | null {
+  return settingsSnapshot ? structuredClone(settingsSnapshot) : null;
+}

@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { workspaceStore } from "../../state/workspace-store.js";
 import { createWorkspaceController } from "./workspace-controller.js";
 import { workspaceIpcClient } from "../../ipc/workspace-client.js";
+import { settingsIpcClient } from "../../ipc/settings.js";
 import { Sidebar } from "../../components/sidebar.js";
 import type { ProjectSummary, ThreadSummary } from "../../../shared/contracts/workspace.js";
 import {
@@ -74,6 +75,7 @@ export function WorkspaceScreen(): React.ReactElement {
   useEffect(() => {
     const unsub = workspaceStore.subscribe(setState);
     controller.loadWorkspace();
+    void settingsIpcClient.getSettings();
     return unsub;
   }, []);
 

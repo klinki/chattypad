@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { settingsIpcClient } from "../ipc/settings.js";
+import { getCachedSettings, settingsIpcClient } from "../ipc/settings.js";
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -10,7 +10,9 @@ export function SettingsDialog({
   isOpen,
   onClose,
 }: SettingsDialogProps): React.ReactElement | null {
-  const [databaseDir, setDatabaseDir] = useState("");
+  const [databaseDir, setDatabaseDir] = useState(
+    () => getCachedSettings()?.general.databaseDir ?? ""
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
