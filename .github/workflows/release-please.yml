@@ -41,29 +41,41 @@ jobs:
       - name: Build Windows stable app
         run: bun run build:stable
 
-      - name: Package Windows release
+      - name: Collect Windows stable release assets
         shell: pwsh
         env:
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
           $ErrorActionPreference = "Stop"
-          $launcher = Get-ChildItem build -Recurse -File -Filter launcher.exe | Select-Object -First 1
-          if (-not $launcher) {
-            throw "Could not find launcher.exe in the Electrobun build output."
+          $setupExe = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.exe | Select-Object -First 1
+          if (-not $setupExe) {
+            throw "Could not find chattypad-Setup.exe in the Electrobun build output."
           }
 
-          $appDir = $launcher.Directory.Parent
-          $zipPath = Join-Path $env:RUNNER_TEMP "chattypad-$env:TAG_NAME-windows-x64.zip"
-
-          if (Test-Path $zipPath) {
-            Remove-Item $zipPath -Force
+          $metadata = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.metadata.json | Select-Object -First 1
+          $archive = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.tar.zst | Select-Object -First 1
+          if (-not $metadata -or -not $archive) {
+            throw "Could not find stable release metadata or archive in the Electrobun build output."
           }
 
-          Compress-Archive -Path (Join-Path $appDir.FullName "*") -DestinationPath $zipPath -Force
-          "ZIP_PATH=$zipPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $assetDir = Join-Path $env:RUNNER_TEMP "chattypad-stable-release"
+          if (Test-Path $assetDir) {
+            Remove-Item $assetDir -Recurse -Force
+          }
 
-      - name: Upload release asset
+          New-Item -ItemType Directory -Path $assetDir | Out-Null
+          Copy-Item $setupExe.FullName -Destination $assetDir
+          Copy-Item $metadata.FullName -Destination $assetDir
+          Copy-Item $archive.FullName -Destination $assetDir
+          "ASSET_DIR=$assetDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
-        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" "$env:ZIP_PATH" --clobber
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" `
+            "$env:ASSET_DIR\chattypad-Setup.exe" `
+            "$env:ASSET_DIR\chattypad-Setup.metadata.json" `
+            "$env:ASSET_DIR\chattypad-Setup.tar.zst" `
+            --clobber
