@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { execSync } from "node:child_process";
 import type { ElectrobunConfig } from "electrobun";
 
 const require = createRequire(import.meta.url);
@@ -16,6 +17,24 @@ const identifierByEnvironment: Record<string, string> = {
   stable: "chattypad.electrobun.stable",
 };
 
+function getGitCommit(): string {
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+const buildDate = new Date().toISOString();
+const buildInfoDefines = {
+  __CHATTYPAD_APP_VERSION__: JSON.stringify(version),
+  __CHATTYPAD_GIT_COMMIT__: JSON.stringify(getGitCommit()),
+  __CHATTYPAD_BUILD_DATE__: JSON.stringify(buildDate),
+};
+
 export default {
   app: {
     name: "chattypad",
@@ -25,10 +44,12 @@ export default {
   build: {
     bun: {
       entrypoint: "src/bun/index.ts",
+      define: buildInfoDefines,
     },
     views: {
       renderer: {
         entrypoint: "src/renderer/main.ts",
+        define: buildInfoDefines,
       },
     },
     copy: {

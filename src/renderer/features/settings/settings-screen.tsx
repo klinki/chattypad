@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Header } from "../../components/header.js";
-import { getCachedSettings, settingsIpcClient } from "../../ipc/settings.js";
+import { settingsIpcClient, getCachedSettings } from "../../ipc/settings.js";
+import { appBuildInfo } from "../../../shared/app-build-info.js";
 
 type SettingsSectionId = "general" | "storage" | "about";
 
@@ -231,7 +232,15 @@ export function SettingsScreen({
               </div>
 
               <div style={infoCardStyle}>
-                <div style={infoLabelStyle}>Local app</div>
+                <div style={infoLabelStyle}>Build information</div>
+                <div style={infoGridStyle}>
+                  <InfoRow label="Version" value={appBuildInfo.version} />
+                  <InfoRow label="Git commit" value={appBuildInfo.gitCommit} />
+                  <InfoRow
+                    label="Build date"
+                    value={new Date(appBuildInfo.buildDate).toLocaleString()}
+                  />
+                </div>
                 <div style={infoCopyStyle}>
                   Settings are saved on this machine and apply the next time ChattyPad starts.
                 </div>
@@ -240,6 +249,15 @@ export function SettingsScreen({
           )}
         </main>
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }): React.ReactElement {
+  return (
+    <div style={infoRowStyle}>
+      <div style={infoRowLabelStyle}>{label}</div>
+      <div style={infoRowValueStyle}>{value}</div>
     </div>
   );
 }
@@ -459,6 +477,36 @@ const infoLabelStyle: React.CSSProperties = {
   marginBottom: 10,
 };
 
+const infoGridStyle: React.CSSProperties = {
+  display: "grid",
+  gap: 12,
+  marginBottom: 14,
+};
+
+const infoRowStyle: React.CSSProperties = {
+  display: "grid",
+  gap: 4,
+  padding: "12px 14px",
+  borderRadius: 12,
+  background: "#11111b",
+  border: "1px solid #313244",
+};
+
+const infoRowLabelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "#6c7086",
+};
+
+const infoRowValueStyle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: "#cdd6f4",
+  wordBreak: "break-word",
+};
+
 const pathValueStyle: React.CSSProperties = {
   fontSize: 15,
   fontWeight: 600,
@@ -472,4 +520,3 @@ const infoCopyStyle: React.CSSProperties = {
   lineHeight: 1.6,
   color: "#a6adc8",
 };
-
