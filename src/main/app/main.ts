@@ -4,6 +4,7 @@
  */
 import fs from "fs";
 import path from "path";
+import { BrowserWindow, defineElectrobunRPC } from "electrobun/bun";
 import { initializeSchema } from "../database/schema.js";
 import { getDatabase, resolveDatabasePath } from "../database/sqlite.js";
 import type { WorkspaceElectrobunRpcSchema } from "../../shared/contracts/electrobun-rpc.js";
@@ -24,36 +25,6 @@ const startupLogPath = path.resolve(
   "chattypad",
   "startup.log"
 );
-
-interface ElectrobunRuntimeModule {
-  BrowserWindow: new (options: {
-    url: string;
-    html: string | null;
-    preload: string | null;
-    renderer?: "native" | "cef";
-    rpc: unknown;
-    title: string;
-    frame: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-    titleBarStyle: "default" | "hidden" | "hiddenInset";
-    transparent: boolean;
-    navigationRules: string | null;
-    sandbox: boolean;
-  }) => unknown;
-    defineElectrobunRPC: <Schema extends WorkspaceElectrobunRpcSchema>(
-    side: "bun",
-    config: {
-      handlers: {
-        requests: Record<string, unknown>;
-        messages: any;
-      };
-    }
-  ) => unknown;
-}
 
 function formatError(error: unknown): string {
   if (error instanceof Error) {
@@ -120,24 +91,6 @@ process.on("unhandledRejection", (reason) => {
   logStartupError("Unhandled promise rejection", reason);
 });
 
-async function loadElectrobunRuntime(): Promise<ElectrobunRuntimeModule | null> {
-  logStartup("Loading Electrobun runtime module");
-
-  try {
-    const dynamicImport = new Function(
-      "specifier",
-      "return import(specifier);"
-    ) as (specifier: string) => Promise<ElectrobunRuntimeModule>;
-
-    const runtime = await dynamicImport("electrobun/bun");
-    logStartup("Electrobun runtime module loaded");
-    return runtime;
-  } catch (error) {
-    logStartupError('Failed to import "electrobun/bun"', error);
-    return null;
-  }
-}
-
 async function bootstrap(): Promise<void> {
   logStartup("Bootstrapping ChattyPad", debugStartupEnabled ? `cwd=${process.cwd()}` : undefined);
 
@@ -161,18 +114,9 @@ async function bootstrap(): Promise<void> {
   initializeSchema(db);
   logStartup("Database schema initialized");
 
-
-  const electrobunRuntime = await loadElectrobunRuntime();
-
   logStartup("Creating workspace RPC request handlers");
   const workspaceRequestHandlers = createWorkspaceRpcRequestHandlers(db);
   const settingsRequestHandlers = createSettingsRpcRequestHandlers(settingsManager);
-
-  if (!electrobunRuntime) {
-    throw new Error(
-      'Electrobun runtime is not available. Launch ChattyPad through "electrobun dev" (or "npm run start"), not plain "bun run".'
-    );
-  }
 
   let mainWindow: any;
 
@@ -212,7 +156,7 @@ async function bootstrap(): Promise<void> {
     },
   } satisfies Record<string, unknown>;
 
-  const rpc = electrobunRuntime.defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
+  const rpc = defineElectrobunRPC<WorkspaceElectrobunRpcSchema>(
     "bun",
     {
       handlers: {
@@ -243,7 +187,7 @@ async function bootstrap(): Promise<void> {
           },
         },
       },
-    }
+    } as any
   );
 
   logStartup(
@@ -264,7 +208,7 @@ async function bootstrap(): Promise<void> {
       : undefined
   );
 
-  mainWindow = new electrobunRuntime.BrowserWindow({
+  mainWindow = new BrowserWindow({
     url: "views://renderer/index.html",
     html: null,
     preload: null,
