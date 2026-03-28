@@ -3,9 +3,16 @@ import { workspaceIpcClient } from "../ipc/workspace-client.js";
 
 interface HeaderProps {
   mode: "frameless" | "inline";
+  subtitle?: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+    title?: string;
+    disabled?: boolean;
+  };
 }
 
-export function Header({ mode }: HeaderProps) {
+export function Header({ mode, subtitle, action }: HeaderProps) {
   const [isMaximized, setIsMaximized] = useState(false);
 
   const handleMaximize = () => {
@@ -49,11 +56,11 @@ export function Header({ mode }: HeaderProps) {
         <div style={{ fontSize: "12px", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase" }}>
           ChattyPad
         </div>
-        {mode === "inline" ? (
+        {subtitle ? (
           <>
             <div style={{ width: 1, height: 14, background: "#45475a" }} />
             <div style={{ fontSize: "12px", color: "#a6adc8" }}>
-              Workspace
+              {subtitle}
             </div>
           </>
         ) : null}
@@ -67,6 +74,14 @@ export function Header({ mode }: HeaderProps) {
             WebkitAppRegion: "no-drag",
           } as any}
         >
+          {action ? (
+            <HeaderActionButton
+              onClick={action.onClick}
+              label={action.label}
+              title={action.title}
+              disabled={action.disabled}
+            />
+          ) : null}
           <WindowButton
             onClick={() => workspaceIpcClient.minimizeWindow()}
             icon={
@@ -108,11 +123,68 @@ export function Header({ mode }: HeaderProps) {
           />
         </div>
       ) : (
-        <div style={{ paddingRight: "16px", fontSize: "12px", color: "#6c7086" }}>
-          Native window controls
-        </div>
+        action ? (
+          <div style={{ paddingRight: "16px" }}>
+            <HeaderActionButton
+              onClick={action.onClick}
+              label={action.label}
+              title={action.title}
+              disabled={action.disabled}
+            />
+          </div>
+        ) : (
+          <div style={{ paddingRight: "16px", fontSize: "12px", color: "#6c7086" }}>
+            Native window controls
+          </div>
+        )
       )}
     </div>
+  );
+}
+
+interface HeaderActionButtonProps {
+  onClick: () => void;
+  label: string;
+  title: string | undefined;
+  disabled: boolean | undefined;
+}
+
+function HeaderActionButton({
+  onClick,
+  label,
+  title,
+  disabled,
+}: HeaderActionButtonProps): React.ReactElement {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
+      title={title ?? label}
+      disabled={disabled}
+      style={{
+        marginRight: "8px",
+        padding: "8px 12px",
+        borderRadius: 8,
+        border: "1px solid #45475a",
+        background: isHovered ? "#313244" : "#262637",
+        color: "#cdd6f4",
+        fontSize: "12px",
+        fontWeight: 700,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        outline: "none",
+        transition: "background-color 0.1s ease, opacity 0.1s ease",
+        WebkitAppRegion: "no-drag",
+      } as any}
+    >
+      {label}
+    </button>
   );
 }
 
