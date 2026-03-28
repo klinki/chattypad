@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.0](https://github.com/klinki/chattypad/compare/chattypad-v0.0.1...chattypad-v0.1.0) (2026-03-28)
+
+
+### Features
+
+* add build info to settings about ([d75c397](https://github.com/klinki/chattypad/commit/d75c397bf93d2a8af678cae5021fd6506b34a965))
+* add full settings screen layout ([68febc2](https://github.com/klinki/chattypad/commit/68febc2f7384bcd31d413ec9023b238fc42da7d6))
+
+
+### Bug Fixes
+
+* preload settings before opening dialog ([b09d411](https://github.com/klinki/chattypad/commit/b09d41118c74e33e114b628545968d249560ee3d))
+* share the Electrobun renderer bridge ([5070820](https://github.com/klinki/chattypad/commit/507082011da6a25af9dd7e0df0758188824c67ae))
+
 ## [0.0.1](https://github.com/klinki/chattypad/compare/chattypad-v0.0.0...chattypad-v0.0.1) (2026-03-27)
 
 
