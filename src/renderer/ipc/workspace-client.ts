@@ -3,7 +3,6 @@
  * In production, calls are made through the Electrobun renderer bridge.
  * The interface is designed to be swappable for tests.
  */
-import Electrobun, { Electroview } from "electrobun/view";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -21,6 +20,7 @@ import type {
   ThreadOpenRequest,
   WorkspaceElectrobunRpcSchema,
 } from "../../shared/contracts/electrobun-rpc.js";
+import { getElectrobunBridge, type WorkspaceRpcRequestProxy } from "./electrobun-bridge.js";
 
 export interface WorkspaceIpcClient {
   loadWorkspace(): Promise<IpcResult<WorkspaceSnapshot>>;
@@ -48,66 +48,15 @@ export interface WorkspaceIpcClient {
   closeWindow(): void;
 }
 
-type WorkspaceRequestMap = WorkspaceElectrobunRpcSchema["bun"]["requests"];
-
-type WorkspaceRpcRequestProxy = {
-  [Channel in keyof WorkspaceRequestMap]: undefined extends WorkspaceRequestMap[Channel]["params"]
-    ? (
-        payload?: WorkspaceRequestMap[Channel]["params"]
-      ) => Promise<WorkspaceRequestMap[Channel]["response"]>
-    : (
-        payload: WorkspaceRequestMap[Channel]["params"]
-      ) => Promise<WorkspaceRequestMap[Channel]["response"]>;
-};
-
-interface WorkspaceRendererRpc {
-  request: WorkspaceRpcRequestProxy;
-}
-
 let bridge: WorkspaceRpcRequestProxy | null | undefined;
-let messageBridge: any | null | undefined;
-
-function hasElectrobunRuntime(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return (
-    typeof window.__electrobun === "object" &&
-    window.__electrobun !== null &&
-    typeof window.__electrobunWebviewId === "number" &&
-    typeof window.__electrobunRpcSocketPort === "number"
-  );
-}
+type WorkspaceRequestMap = WorkspaceElectrobunRpcSchema["bun"]["requests"];
 
 function getBridge(): WorkspaceRpcRequestProxy | null {
   if (bridge !== undefined) {
     return bridge;
   }
 
-  if (!hasElectrobunRuntime()) {
-    bridge = null;
-    messageBridge = null;
-    return bridge;
-  }
-
-  try {
-    const rpc = Electroview.defineRPC<WorkspaceElectrobunRpcSchema>({
-      maxRequestTime: 30000,
-      handlers: {
-        requests: {},
-        messages: {},
-      },
-    });
-
-    const electrobun = new Electrobun.Electroview({ rpc });
-    bridge = electrobun.rpc?.request ?? rpc.request;
-    messageBridge = electrobun.rpc?.send ?? rpc.send;
-  } catch (error) {
-    console.error("Failed to initialize the Electrobun IPC bridge.", error);
-    bridge = null;
-    messageBridge = null;
-  }
+  bridge = getElectrobunBridge()?.request ?? null;
 
   return bridge;
 }
@@ -141,11 +90,9 @@ async function invokeIpc<Channel extends keyof WorkspaceRequestMap>(
 }
 
 function invokeMessage(channel: string, payload?: any): void {
-  getBridge(); // Ensure initialization
-  if (messageBridge && typeof messageBridge === 'function') {
-    messageBridge(channel, payload);
-  } else if (messageBridge && messageBridge[channel]) {
-    messageBridge[channel](payload);
+  const activeBridge = getElectrobunBridge();
+  if (activeBridge && typeof activeBridge.send === "function") {
+    activeBridge.send(channel, payload);
   } else {
     console.warn(`Cannot send IPC message: bridge unavailable for ${channel}`);
   }

@@ -1,4 +1,3 @@
-import Electrobun, { Electroview } from "electrobun/view";
 import type { IpcResult } from "../../shared/contracts/workspace.js";
 import type {
   Settings,
@@ -6,6 +5,7 @@ import type {
 } from "../../shared/contracts/settings.js";
 import { SETTINGS_IPC_CHANNELS } from "../../shared/contracts/settings.js";
 import type { WorkspaceElectrobunRpcSchema } from "../../shared/contracts/electrobun-rpc.js";
+import { getElectrobunBridge, type WorkspaceRpcRequestProxy } from "./electrobun-bridge.js";
 
 export interface SettingsIpcClient {
   getSettings(): Promise<IpcResult<Settings>>;
@@ -14,66 +14,15 @@ export interface SettingsIpcClient {
   ): Promise<IpcResult<Settings>>;
 }
 
-type SettingsRequestMap = WorkspaceElectrobunRpcSchema["bun"]["requests"];
 type SettingsChannel =
   | typeof SETTINGS_IPC_CHANNELS.SETTINGS_GET
   | typeof SETTINGS_IPC_CHANNELS.SETTINGS_UPDATE;
 
-type SettingsRpcRequestProxy = {
-  [Channel in SettingsChannel]: undefined extends SettingsRequestMap[Channel]["params"]
-    ? (
-        payload?: SettingsRequestMap[Channel]["params"]
-      ) => Promise<SettingsRequestMap[Channel]["response"]>
-    : (
-        payload: SettingsRequestMap[Channel]["params"]
-      ) => Promise<SettingsRequestMap[Channel]["response"]>;
-};
+type SettingsRequestMap = WorkspaceElectrobunRpcSchema["bun"]["requests"];
 
-let bridge: SettingsRpcRequestProxy | null | undefined;
+let bridge: WorkspaceRpcRequestProxy | null | undefined;
 let settingsSnapshot: Settings | null = null;
 let settingsLoadPromise: Promise<IpcResult<Settings>> | null = null;
-
-function hasElectrobunRuntime(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return (
-    typeof window.__electrobun === "object" &&
-    window.__electrobun !== null &&
-    typeof window.__electrobunWebviewId === "number" &&
-    typeof window.__electrobunRpcSocketPort === "number"
-  );
-}
-
-function getBridge(): SettingsRpcRequestProxy | null {
-  if (bridge !== undefined) {
-    return bridge;
-  }
-
-  if (!hasElectrobunRuntime()) {
-    bridge = null;
-    return bridge;
-  }
-
-  try {
-    const rpc = Electroview.defineRPC<WorkspaceElectrobunRpcSchema>({
-      maxRequestTime: 30000,
-      handlers: {
-        requests: {},
-        messages: {},
-      },
-    });
-
-    const electrobun = new Electrobun.Electroview({ rpc });
-    bridge = (electrobun.rpc?.request ?? rpc.request) as SettingsRpcRequestProxy;
-  } catch (error) {
-    console.error("Failed to initialize the settings IPC bridge.", error);
-    bridge = null;
-  }
-
-  return bridge;
-}
 
 function unavailableBridgeResult<T>(): IpcResult<T> {
   return {
@@ -133,4 +82,13 @@ export const settingsIpcClient: SettingsIpcClient = {
 
 export function getCachedSettings(): Settings | null {
   return settingsSnapshot ? structuredClone(settingsSnapshot) : null;
+}
+
+function getBridge(): WorkspaceRpcRequestProxy | null {
+  if (bridge !== undefined) {
+    return bridge;
+  }
+
+  bridge = getElectrobunBridge()?.request ?? null;
+  return bridge;
 }
