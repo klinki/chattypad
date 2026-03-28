@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/klinki/chattypad/compare/chattypad-v0.1.0...chattypad-v0.1.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* bundle electrobun runtime for stable launcher ([282ff74](https://github.com/klinki/chattypad/commit/282ff7462591d28e1a78ac4d34f45f3428386f6e))
+
 ## [0.1.0](https://github.com/klinki/chattypad/compare/chattypad-v0.0.1...chattypad-v0.1.0) (2026-03-28)
 
 
