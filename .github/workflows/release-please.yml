@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build Windows app
-        run: bun run build
+      - name: Build Windows stable app
+        run: bun run build:stable
 
       - name: Package Windows release
         shell: pwsh
