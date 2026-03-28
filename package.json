@@ -9,6 +9,7 @@
     "start:debug": "set CHATTYPAD_DEBUG=1&& electrobun dev",
     "dev": "electrobun dev --watch",
     "build": "electrobun build",
+    "build:stable": "electrobun build --env=stable",
     "build:renderer": "node scripts/build-renderer.mjs",
     "test": "bun test",
     "lint": "tsc --noEmit"
