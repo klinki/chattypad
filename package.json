@@ -11,6 +11,7 @@
     "build": "electrobun build",
     "build:stable": "electrobun build --env=stable",
     "build:renderer": "node scripts/build-renderer.mjs",
+    "build:icon": "node scripts/generate-icon-ico.mjs",
     "test": "bun test",
     "lint": "tsc --noEmit"
   },

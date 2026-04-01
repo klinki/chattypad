@@ -17,11 +17,17 @@ if (!fs.existsSync(manifestPath)) {
   throw new Error(`Manifest file not found: ${manifestPath}`);
 }
 
-const executableNames = new Set(["launcher.exe", "bun.exe"]);
+const iconPath = path.resolve("assets", "icon.ico");
+if (!fs.existsSync(iconPath)) {
+  throw new Error(`Windows icon file not found: ${iconPath}`);
+}
+
+const executableNames = new Set(["launcher", "launcher.exe", "bun", "bun.exe"]);
 const targets = [];
 
 for (const entry of walk(buildDir)) {
-  if (executableNames.has(path.basename(entry).toLowerCase())) {
+  const baseName = path.basename(entry).toLowerCase();
+  if (executableNames.has(baseName) || baseName.endsWith("-setup.exe")) {
     targets.push(entry);
   }
 }
@@ -32,9 +38,10 @@ if (targets.length === 0) {
 }
 
 for (const exePath of targets) {
-  console.log(`[dpi-manifest] Embedding manifest into ${exePath}`);
+  console.log(`[dpi-manifest] Embedding manifest and icon into ${exePath}`);
   await rcedit(exePath, {
     "application-manifest": manifestPath,
+    icon: iconPath,
     "requested-execution-level": "asInvoker",
   });
 }

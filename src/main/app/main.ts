@@ -4,7 +4,9 @@
  */
 import fs from "fs";
 import path from "path";
+import { dlopen, FFIType } from "bun:ffi";
 import { BrowserWindow, defineElectrobunRPC } from "electrobun/bun";
+import { native as electrobunNative, toCString } from "../../../node_modules/electrobun/dist/api/bun/proc/native";
 import { initializeSchema } from "../database/schema.js";
 import { getDatabase, resolveDatabasePath } from "../database/sqlite.js";
 import type { WorkspaceElectrobunRpcSchema } from "../../shared/contracts/electrobun-rpc.js";
@@ -78,6 +80,100 @@ function createWindowUnavailableResult() {
       recoverable: false,
     },
   };
+}
+
+const windowsIconCandidates = [
+  path.resolve(process.cwd(), "assets", "icon.ico"),
+  path.resolve(process.cwd(), "Resources", "app.ico"),
+  path.resolve(process.cwd(), "..", "Resources", "app.ico"),
+];
+
+const IMAGE_ICON = 1;
+const LR_LOADFROMFILE = 0x0010;
+const LR_DEFAULTSIZE = 0x0040;
+const WM_SETICON = 0x0080;
+const ICON_SMALL = 0;
+const ICON_BIG = 1;
+const GCLP_HICON = -14;
+const GCLP_HICONSM = -34;
+
+let windowsUser32: any = null;
+
+function getWindowsUser32(): any {
+  if (!windowsUser32) {
+    windowsUser32 = dlopen("user32.dll", {
+      LoadImageA: {
+        args: [
+          FFIType.ptr,
+          FFIType.cstring,
+          FFIType.u32,
+          FFIType.i32,
+          FFIType.i32,
+          FFIType.u32,
+        ],
+        returns: FFIType.ptr,
+      },
+      SendMessageA: {
+        args: [FFIType.ptr, FFIType.u32, FFIType.ptr, FFIType.ptr],
+        returns: FFIType.ptr,
+      },
+      SetClassLongPtrA: {
+        args: [FFIType.ptr, FFIType.i32, FFIType.ptr],
+        returns: FFIType.ptr,
+      },
+    });
+  }
+
+  return windowsUser32;
+}
+
+function resolveWindowsWindowIconPath(): string | null {
+  for (const candidate of windowsIconCandidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function applyWindowsWindowIcon(windowHandle: any): void {
+  if (process.platform !== "win32") {
+    return;
+  }
+
+  const iconPath = resolveWindowsWindowIconPath();
+  if (!iconPath) {
+    logStartup("Windows icon asset not found for window chrome");
+    return;
+  }
+
+  try {
+    const user32 = getWindowsUser32();
+    const iconHandle = user32.symbols.LoadImageA(
+      null,
+      toCString(iconPath),
+      IMAGE_ICON,
+      0,
+      0,
+      LR_LOADFROMFILE | LR_DEFAULTSIZE
+    );
+
+    if (iconHandle) {
+      user32.symbols.SetClassLongPtrA(windowHandle, GCLP_HICON, iconHandle);
+      user32.symbols.SetClassLongPtrA(windowHandle, GCLP_HICONSM, iconHandle);
+      user32.symbols.SendMessageA(windowHandle, WM_SETICON, ICON_BIG, iconHandle);
+      user32.symbols.SendMessageA(windowHandle, WM_SETICON, ICON_SMALL, iconHandle);
+    }
+
+    electrobunNative.symbols.setWindowIcon(windowHandle, toCString(iconPath));
+    logStartup(
+      "Applied Windows window icon",
+      debugStartupEnabled ? `icon=${iconPath}` : undefined
+    );
+  } catch (error) {
+    logStartupError("Failed to apply Windows window icon", error);
+  }
 }
 
 initializeStartupLogging();
@@ -222,12 +318,17 @@ async function bootstrap(): Promise<void> {
       height: 800,
     },
     titleBarStyle: windowConfig.titleBarStyle,
+    hidden: process.platform === "win32",
     // @ts-ignore: inject styleMask to force resizable frameless window if supported
     styleMask: windowConfig.styleMask,
     transparent: windowConfig.transparent,
     navigationRules: null,
     sandbox: false,
   });
+  applyWindowsWindowIcon(mainWindow.ptr);
+  if (process.platform === "win32") {
+    mainWindow.show();
+  }
   // Pass the selected window mode without modifying the HTML asset URL.
   mainWindow.webview?.on?.("dom-ready", () => {
     mainWindow.webview.executeJavascript(
