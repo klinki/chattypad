@@ -38,44 +38,22 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build Windows stable app
-        run: bun run build:stable
+      - name: Build Windows app
+        run: bun run build
 
-      - name: Collect Windows stable release assets
-        shell: pwsh
-        env:
-          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          $setupExe = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.exe | Select-Object -First 1
-          if (-not $setupExe) {
-            throw "Could not find chattypad-Setup.exe in the Electrobun build output."
-          }
-
-          $metadata = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.metadata.json | Select-Object -First 1
-          $archive = Get-ChildItem build -Recurse -File -Filter chattypad-Setup.tar.zst | Select-Object -First 1
-          if (-not $metadata -or -not $archive) {
-            throw "Could not find stable release metadata or archive in the Electrobun build output."
-          }
-
-          $assetDir = Join-Path $env:RUNNER_TEMP "chattypad-stable-release"
-          if (Test-Path $assetDir) {
-            Remove-Item $assetDir -Recurse -Force
-          }
-
-          New-Item -ItemType Directory -Path $assetDir | Out-Null
-          Copy-Item $setupExe.FullName -Destination $assetDir
-          Copy-Item $metadata.FullName -Destination $assetDir
-          Copy-Item $archive.FullName -Destination $assetDir
-          "ASSET_DIR=$assetDir" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Upload release assets
+      - name: Upload release artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" `
-            "$env:ASSET_DIR\chattypad-Setup.exe" `
-            "$env:ASSET_DIR\chattypad-Setup.metadata.json" `
-            "$env:ASSET_DIR\chattypad-Setup.tar.zst" `
-            --clobber
+          $ErrorActionPreference = "Stop"
+          $artifactDir = Join-Path $PWD "artifacts"
+          $artifacts = Get-ChildItem -Path $artifactDir -Filter "stable-win-x64-*" |
+            Sort-Object Name |
+            Select-Object -ExpandProperty FullName
+
+          if (-not $artifacts) {
+            throw "No Electrobun release artifacts were produced in '$artifactDir'."
+          }
+
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" $artifacts --clobber
