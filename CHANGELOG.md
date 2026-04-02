@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/klinki/chattypad/compare/chattypad-v0.1.1...chattypad-v0.2.0) (2026-04-02)
+
+
+### Features
+
+* Add icons ([0e5fbd2](https://github.com/klinki/chattypad/commit/0e5fbd2c4bdfd6ac26a2bc4a66a358b7ab45c293))
+
+
+### Bug Fixes
+
+* **release:** upload packaged windows artifacts ([b95e8a9](https://github.com/klinki/chattypad/commit/b95e8a9b50b8cbad184b7d7d1cfa5035de798b22))
+* **windows:** Set native window title icon ([f4dcb03](https://github.com/klinki/chattypad/commit/f4dcb03ed5312c868a3f9a664c34a70379a02422))
+
 ## [0.1.1](https://github.com/klinki/chattypad/compare/chattypad-v0.1.0...chattypad-v0.1.1) (2026-03-28)
 
 
