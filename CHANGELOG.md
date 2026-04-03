@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/klinki/chattypad/compare/chattypad-v0.2.0...chattypad-v0.2.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **release:** build stable windows artifacts ([751cb0f](https://github.com/klinki/chattypad/commit/751cb0fff8b1f9cd62d3af7977bd81a409141b7d))
+
 ## [0.2.0](https://github.com/klinki/chattypad/compare/chattypad-v0.1.1...chattypad-v0.2.0) (2026-04-02)
 
 
