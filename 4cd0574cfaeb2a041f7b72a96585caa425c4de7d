@@ -1,0 +1,23 @@
+.github/workflows/release-please.yml
+  255967b442dc3805 41-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "4cd0574cfaeb2a041f7b72a96585caa425c4de7d",
+  "prompts": {
+    "255967b442dc3805": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d1ca0-626a-79f1-a429-154fe645593c",
+        "model": "gpt-5.4-mini"
+      },
+      "human_author": "David Klingenberg",
+      "messages": [],
+      "total_additions": 1088,
+      "total_deletions": 1043,
+      "accepted_lines": 1028,
+      "overriden_lines": 0
+    }
+  }
+}
