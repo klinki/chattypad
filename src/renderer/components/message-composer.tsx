@@ -50,7 +50,7 @@ export function MessageComposer({
   return (
     <div
       style={{
-        padding: "12px 16px",
+        padding: "16px",
         borderTop: "1px solid #313244",
         background: "#1e1e2e",
         display: "flex",
@@ -78,7 +78,7 @@ export function MessageComposer({
           Enter at least one non-whitespace character to send a message.
         </div>
       )}
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "stretch" }}>
         <textarea
           ref={textareaRef}
           value={value}
@@ -94,10 +94,11 @@ export function MessageComposer({
             color: "#cdd6f4",
             border: "1px solid #45475a",
             borderRadius: 8,
-            padding: "10px 12px",
-            fontSize: 15,
+            padding: "12px",
+            fontSize: 14,
             outline: "none",
             fontFamily: "inherit",
+            lineHeight: "1.5",
           }}
           aria-label="Message input"
           aria-invalid={sendError ? true : undefined}
@@ -107,7 +108,6 @@ export function MessageComposer({
           disabled={!canSend}
           aria-label="Send message"
           style={{
-            padding: "8px 16px",
             background: canSend ? "#1e66f5" : "#313244",
             color: canSend ? "#ffffff" : "#6c7086",
             border: "none",
@@ -116,7 +116,7 @@ export function MessageComposer({
             fontSize: 14,
             fontWeight: 600,
             flexShrink: 0,
-            height: 42,
+            padding: "0 20px",
           }}
         >
           Send
