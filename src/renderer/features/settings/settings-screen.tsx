@@ -119,10 +119,10 @@ export function SettingsScreen({
             <div style={sidebarHeadingStyle}>Sections</div>
             <button
               type="button"
+              className="top-action-btn"
               onClick={onBack}
               disabled={isSaving}
               title="Return to the workspace"
-              style={backButtonStyle}
             >
               Back to app
             </button>
@@ -135,15 +135,17 @@ export function SettingsScreen({
                 <button
                   key={section.id}
                   type="button"
+                  className="sidebar-item-container"
                   onClick={() => setSelectedSection(section.id)}
                   disabled={isSaving}
                   style={{
                     ...sectionButtonStyle,
-                    ...(isSelected ? selectedSectionButtonStyle : {}),
+                    background: isSelected ? "var(--bg-active)" : "transparent",
+                    color: isSelected ? "#fff" : "var(--text-muted)",
                   }}
                 >
                   <div style={sectionButtonTitleStyle}>{section.title}</div>
-                  <div style={sectionButtonDescriptionStyle}>{section.description}</div>
+                  <div style={{ ...sectionButtonDescriptionStyle, color: isSelected ? "rgba(255,255,255,0.7)" : "var(--text-muted)" }}>{section.description}</div>
                 </button>
               );
             })}
@@ -182,19 +184,21 @@ export function SettingsScreen({
                 <div style={actionsStyle}>
                   <button
                     type="button"
+                    className="top-action-btn"
                     onClick={onBack}
                     disabled={isSaving}
-                    style={secondaryButtonStyle}
+                    style={{ padding: "8px 16px" }}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
+                    className="top-action-btn"
                     onClick={() => {
                       void handleSave();
                     }}
                     disabled={!canSave}
-                    style={primaryButtonStyle}
+                    style={{ padding: "8px 16px", background: "var(--accent) !important", color: "#fff", border: "none" }}
                   >
                     {isSaving ? "Saving..." : "Save changes"}
                   </button>
@@ -224,25 +228,30 @@ export function SettingsScreen({
             <section style={panelStyle}>
               <div style={panelHeaderStyle}>
                 <div>
-                  <h1 style={panelTitleStyle}>About</h1>
+                  <h1 style={panelTitleStyle}>About ChattyPad</h1>
                   <p style={panelCopyStyle}>
-                    ChattyPad keeps settings and workspace data local to this device.
+                    ChattyPad is a local-first desktop workspace. Your data never leaves your machine.
                   </p>
                 </div>
               </div>
 
-              <div style={infoCardStyle}>
-                <div style={infoLabelStyle}>Build information</div>
-                <div style={infoGridStyle}>
-                  <InfoRow label="Version" value={appBuildInfo.version} />
-                  <InfoRow label="Git commit" value={appBuildInfo.gitCommit} />
-                  <InfoRow
-                    label="Build date"
-                    value={new Date(appBuildInfo.buildDate).toLocaleString()}
-                  />
+              <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ paddingBottom: 12, borderBottom: "1px solid var(--border-subtle)" }}>
+                  <div style={infoLabelStyle}>App Details</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "12px 24px", marginTop: 12 }}>
+                    <div style={infoRowLabelStyle}>Version</div>
+                    <div style={infoRowValueStyle}>{appBuildInfo.version}</div>
+                    
+                    <div style={infoRowLabelStyle}>Git commit</div>
+                    <div style={infoRowValueStyle}>{appBuildInfo.gitCommit}</div>
+                    
+                    <div style={infoRowLabelStyle}>Build date</div>
+                    <div style={infoRowValueStyle}>{new Date(appBuildInfo.buildDate).toLocaleString()}</div>
+                  </div>
                 </div>
+
                 <div style={infoCopyStyle}>
-                  Settings are saved on this machine and apply the next time ChattyPad starts.
+                  Settings are saved locally and apply the next time the application starts.
                 </div>
               </div>
             </section>
@@ -253,22 +262,14 @@ export function SettingsScreen({
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }): React.ReactElement {
-  return (
-    <div style={infoRowStyle}>
-      <div style={infoRowLabelStyle}>{label}</div>
-      <div style={infoRowValueStyle}>{value}</div>
-    </div>
-  );
-}
 
 const screenStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   height: "100vh",
   width: "100%",
-  background: "linear-gradient(180deg, #11111b 0%, #1e1e2e 100%)",
-  color: "#cdd6f4",
+  background: "var(--bg-darker)",
+  color: "var(--text-main)",
 };
 
 const contentLayoutStyle: React.CSSProperties = {
@@ -281,8 +282,8 @@ const contentLayoutStyle: React.CSSProperties = {
 const sidebarStyle: React.CSSProperties = {
   width: 280,
   minWidth: 220,
-  background: "#181825",
-  borderRight: "1px solid #313244",
+  background: "var(--bg-sidebar)",
+  borderRight: "1px solid var(--border-subtle)",
   display: "flex",
   flexDirection: "column",
   padding: "20px 12px",
@@ -291,11 +292,11 @@ const sidebarStyle: React.CSSProperties = {
 };
 
 const sidebarHeadingStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: "0.05em",
   textTransform: "uppercase",
-  color: "#6c7086",
+  color: "var(--text-muted)",
   padding: "0 4px",
 };
 
@@ -316,10 +317,11 @@ const sectionButtonStyle: React.CSSProperties = {
   border: "1px solid transparent",
   borderRadius: 12,
   background: "transparent",
-  color: "#a6adc8",
-  padding: "12px 12px",
+  color: "var(--text-muted)",
+  padding: "10px 12px",
   textAlign: "left",
   cursor: "pointer",
+  transition: "all 0.15s ease",
 };
 
 const selectedSectionButtonStyle: React.CSSProperties = {
@@ -337,7 +339,8 @@ const sectionButtonTitleStyle: React.CSSProperties = {
 const sectionButtonDescriptionStyle: React.CSSProperties = {
   fontSize: 12,
   lineHeight: 1.4,
-  color: "#6c7086",
+  color: "var(--text-muted)",
+  opacity: 0.8,
 };
 
 const backButtonStyle: React.CSSProperties = {
@@ -375,9 +378,9 @@ const panelHeaderStyle: React.CSSProperties = {
 
 const panelTitleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 28,
-  fontWeight: 800,
-  color: "#cdd6f4",
+  fontSize: 24,
+  fontWeight: 600,
+  color: "var(--text-main)",
 };
 
 const panelCopyStyle: React.CSSProperties = {
@@ -386,21 +389,20 @@ const panelCopyStyle: React.CSSProperties = {
   maxWidth: 560,
   fontSize: 14,
   lineHeight: 1.6,
-  color: "#a6adc8",
+  color: "var(--text-muted)",
 };
 
 const cardStyle: React.CSSProperties = {
-  border: "1px solid #313244",
-  borderRadius: 16,
-  background: "#181825",
+  border: "1px solid var(--border-subtle)",
+  borderRadius: 12,
+  background: "rgba(255,255,255,0.02)",
   padding: 20,
-  boxShadow: "0 18px 40px rgba(0, 0, 0, 0.24)",
 };
 
 const infoCardStyle: React.CSSProperties = {
-  border: "1px solid #313244",
-  borderRadius: 16,
-  background: "#181825",
+  border: "1px solid var(--border-subtle)",
+  borderRadius: 12,
+  background: "rgba(255,255,255,0.02)",
   padding: 20,
 };
 
@@ -428,7 +430,7 @@ const helperTextStyle: React.CSSProperties = {
   marginBottom: 0,
   fontSize: 13,
   lineHeight: 1.5,
-  color: "#a6adc8",
+  color: "var(--text-muted)",
 };
 
 const errorTextStyle: React.CSSProperties = {
@@ -469,11 +471,11 @@ const primaryButtonStyle: React.CSSProperties = {
 };
 
 const infoLabelStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: "0.05em",
   textTransform: "uppercase",
-  color: "#6c7086",
+  color: "var(--text-muted)",
   marginBottom: 10,
 };
 
@@ -483,27 +485,18 @@ const infoGridStyle: React.CSSProperties = {
   marginBottom: 14,
 };
 
-const infoRowStyle: React.CSSProperties = {
-  display: "grid",
-  gap: 4,
-  padding: "12px 14px",
-  borderRadius: 12,
-  background: "#11111b",
-  border: "1px solid #313244",
-};
 
 const infoRowLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "#6c7086",
+  fontSize: 12,
+  fontWeight: 400,
+  color: "var(--text-muted)",
 };
 
 const infoRowValueStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#cdd6f4",
+  fontSize: 12,
+  fontWeight: 400,
+  color: "var(--text-main)",
+  fontFamily: "monospace",
   wordBreak: "break-word",
 };
 
@@ -518,5 +511,5 @@ const infoCopyStyle: React.CSSProperties = {
   marginTop: 10,
   fontSize: 13,
   lineHeight: 1.6,
-  color: "#a6adc8",
+  color: "var(--text-muted)",
 };
