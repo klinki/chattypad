@@ -59,46 +59,47 @@ const containerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  background: "#1e1e2e",
+  background: "var(--bg-darker)",
 };
 
 const cardStyle: React.CSSProperties = {
-  width: "min(400px, 100%)",
-  padding: 32,
-  borderRadius: 16,
-  background: "#181825",
-  border: "1px solid #313244",
+  width: "min(380px, 100%)",
+  padding: "40px 32px",
+  borderRadius: 12,
+  background: "var(--bg-sidebar)",
+  border: "1px solid var(--border-subtle)",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   textAlign: "center",
-  boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+  boxShadow: "0 15px 45px rgba(0, 0, 0, 0.5)",
 };
 
 const titleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 24,
-  fontWeight: 700,
-  color: "#cdd6f4",
+  fontSize: 20,
+  fontWeight: 600,
+  color: "var(--text-main)",
 };
 
 const copyStyle: React.CSSProperties = {
   marginTop: 12,
   fontSize: 14,
   lineHeight: 1.5,
-  color: "#a6adc8",
+  color: "var(--text-muted)",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "1px solid #45475a",
-  background: "#11111b",
-  color: "#cdd6f4",
-  fontSize: 16,
+  padding: "12px 14px",
+  borderRadius: 8,
+  border: "1px solid var(--border-subtle)",
+  background: "rgba(255, 255, 255, 0.04)",
+  color: "var(--text-main)",
+  fontSize: 14,
   outline: "none",
   marginBottom: 16,
+  textAlign: "center",
 };
 
 const errorStyle: React.CSSProperties = {
@@ -106,24 +107,25 @@ const errorStyle: React.CSSProperties = {
   color: "#f38ba8",
   fontSize: 13,
   lineHeight: 1.4,
-  textAlign: "left",
 };
 
 const buttonStyle: React.CSSProperties = {
   width: "100%",
   padding: "12px",
-  borderRadius: 10,
+  borderRadius: 8,
   border: "none",
-  background: "#89b4fa",
-  color: "#11111b",
-  fontSize: 16,
+  background: "var(--accent-blue)",
+  color: "#ffffff",
+  fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
+  transition: "opacity 0.2s ease",
 };
 
 const disabledButtonStyle: React.CSSProperties = {
   ...buttonStyle,
-  background: "#45475a",
-  color: "#7f849c",
+  background: "var(--bg-active)",
+  color: "var(--text-muted)",
   cursor: "not-allowed",
+  opacity: 0.5,
 };

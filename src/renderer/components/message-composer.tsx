@@ -190,7 +190,7 @@ export function MessageComposer({
             position: "absolute",
             right: 8,
             bottom: 8,
-            background: canSend ? "#1e66f5" : "transparent",
+            background: canSend ? "var(--accent-blue)" : "transparent",
             color: canSend ? "#ffffff" : "var(--text-muted)",
             border: "none",
             borderRadius: 8,

@@ -185,20 +185,21 @@ function SearchHint({
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(17, 17, 27, 0.64)",
+  background: "rgba(0, 0, 0, 0.4)",
   display: "flex",
   alignItems: "flex-start",
   justifyContent: "center",
-  padding: "72px 24px 24px",
+  padding: "80px 24px 24px",
   zIndex: 1200,
+  backdropFilter: "blur(4px)",
 };
 
 const panelStyle: React.CSSProperties = {
-  width: "min(760px, 100%)",
-  borderRadius: 18,
-  border: "1px solid #313244",
-  background: "#181825",
-  boxShadow: "0 30px 80px rgba(0, 0, 0, 0.45)",
+  width: "min(700px, 100%)",
+  borderRadius: 12,
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-sidebar)",
+  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
   overflow: "hidden",
 };
 
@@ -206,90 +207,88 @@ const inputRowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 12,
-  padding: 16,
-  borderBottom: "1px solid #313244",
+  padding: "16px 20px",
+  borderBottom: "1px solid var(--border-subtle)",
 };
 
 const inputStyle: React.CSSProperties = {
   flex: 1,
-  border: "1px solid #45475a",
-  borderRadius: 12,
-  background: "#11111b",
-  color: "#cdd6f4",
-  fontSize: 15,
-  padding: "12px 14px",
+  border: "none",
+  background: "transparent",
+  color: "var(--text-main)",
+  fontSize: 16,
+  padding: "8px 0",
   outline: "none",
 };
 
 const closeButtonStyle: React.CSSProperties = {
-  borderRadius: 10,
-  border: "1px solid #45475a",
-  background: "#262637",
-  color: "#cdd6f4",
-  fontSize: 12,
-  fontWeight: 700,
-  padding: "10px 12px",
+  borderRadius: 6,
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-hover)",
+  color: "var(--text-muted)",
+  fontSize: 11,
+  fontWeight: 600,
+  padding: "4px 8px",
   cursor: "pointer",
 };
 
 const resultsPanelStyle: React.CSSProperties = {
-  maxHeight: "min(480px, calc(100vh - 180px))",
+  maxHeight: "min(500px, calc(100vh - 200px))",
   overflowY: "auto",
 };
 
 const resultsListStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  padding: 10,
-  gap: 8,
+  padding: 12,
+  gap: 4,
 };
 
 const resultButtonStyle: React.CSSProperties = {
-  border: "1px solid #313244",
-  borderRadius: 14,
-  background: "#1e1e2e",
-  color: "#cdd6f4",
-  padding: 14,
+  border: "1px solid transparent",
+  borderRadius: 8,
+  background: "transparent",
+  color: "var(--text-main)",
+  padding: "10px 14px",
   textAlign: "left",
   cursor: "pointer",
+  transition: "all 0.15s ease",
 };
 
 const selectedResultButtonStyle: React.CSSProperties = {
-  borderColor: "#89b4fa",
-  background: "#23273d",
+  background: "var(--bg-hover)",
+  borderColor: "var(--border-subtle)",
 };
 
 const resultHeaderStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 10,
-  marginBottom: 8,
-  flexWrap: "wrap",
+  marginBottom: 4,
 };
 
 const kindBadgeStyle: React.CSSProperties = {
   display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "4px 8px",
-  borderRadius: 999,
-  background: "#313244",
-  color: "#89b4fa",
-  fontSize: 11,
+  padding: "2px 6px",
+  borderRadius: 4,
+  background: "var(--bg-active)",
+  color: "var(--accent)",
+  fontSize: 10,
   fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.05em",
 };
 
 const resultPathStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: "#a6adc8",
+  fontSize: 12,
+  color: "var(--text-muted)",
 };
 
 const resultSnippetStyle: React.CSSProperties = {
-  fontSize: 14,
+  fontSize: 13,
   lineHeight: 1.5,
-  color: "#cdd6f4",
+  color: "var(--text-main)",
+  opacity: 0.8,
   whiteSpace: "pre-wrap",
   wordBreak: "break-word",
 };

@@ -130,28 +130,34 @@ function ErrorState({ error }: { error: IpcError }): React.ReactElement {
         alignItems: "center",
         justifyContent: "center",
         color: "#f38ba8",
-        gap: 8,
+        gap: 12,
+        padding: 40,
       }}
     >
-      <div style={{ fontSize: 24 }}>⚠️</div>
-      <div style={{ fontSize: 17, fontWeight: 600 }}>
+      <div style={{ fontSize: 32 }}>⚠️</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-main)" }}>
         {isCorruptDatabase
           ? "Saved Data Needs Recovery"
           : error.recoverable
             ? "Workspace Unavailable"
             : "Fatal Error"}
       </div>
-      <div style={{ fontSize: 14, maxWidth: 300, textAlign: "center", color: "#a6adc8" }}>
+      <div style={{ fontSize: 14, maxWidth: 320, textAlign: "center", color: "var(--text-muted)", lineHeight: 1.5 }}>
         {error.message}
       </div>
       {isCorruptDatabase && (
         <div
           style={{
             fontSize: 13,
-            maxWidth: 340,
+            maxWidth: 400,
             textAlign: "center",
-            color: "#bac2de",
+            color: "var(--text-muted)",
             lineHeight: 1.5,
+            padding: "16px",
+            background: "rgba(255, 255, 255, 0.04)",
+            borderRadius: 8,
+            border: "1px solid var(--border-subtle)",
+            marginTop: 8,
           }}
         >
           Close ChattyPad, back up <code>chattypad.db</code> if needed, then
@@ -159,7 +165,9 @@ function ErrorState({ error }: { error: IpcError }): React.ReactElement {
           database.
         </div>
       )}
-      <div style={{ fontSize: 12, color: "#585b70" }}>code: {error.code}</div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", opacity: 0.5, marginTop: 12 }}>
+        Error Code: {error.code}
+      </div>
     </div>
   );
 }

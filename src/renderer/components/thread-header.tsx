@@ -17,16 +17,16 @@ export function ThreadHeader({ thread }: ThreadHeaderProps): React.ReactElement 
   return (
     <header
       style={{
-        padding: "12px 20px",
-        borderBottom: "1px solid #313244",
-        background: "#1e1e2e",
+        padding: "16px 20px",
+        borderBottom: "1px solid var(--border-subtle)",
+        background: "var(--bg-header)",
         flexShrink: 0,
       }}
     >
-      <h1 style={{ fontSize: 18, fontWeight: 600, color: "#cdd6f4", margin: 0 }}>
+      <h1 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-main)", margin: 0 }}>
         {thread.title}
       </h1>
-      <div style={{ fontSize: 13, color: "#585b70", marginTop: 4 }}>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
         {lastActivityLabel}
       </div>
     </header>

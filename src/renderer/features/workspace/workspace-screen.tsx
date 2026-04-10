@@ -745,46 +745,47 @@ function UnlockProjectDialog({
 const dialogOverlayStyle: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(17, 17, 27, 0.78)",
+  background: "rgba(0, 0, 0, 0.4)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   padding: 24,
   zIndex: 1100,
+  backdropFilter: "blur(4px)",
 };
 
 const dialogCardStyle: React.CSSProperties = {
-  width: "min(420px, 100%)",
-  borderRadius: 16,
-  border: "1px solid #313244",
-  background: "#181825",
-  boxShadow: "0 24px 60px rgba(0, 0, 0, 0.35)",
-  padding: 20,
+  width: "min(400px, 100%)",
+  borderRadius: 12,
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-sidebar)",
+  boxShadow: "0 24px 60px rgba(0, 0, 0, 0.5)",
+  padding: 24,
 };
 
 const dialogTitleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 20,
-  fontWeight: 700,
-  color: "#cdd6f4",
+  fontSize: 18,
+  fontWeight: 600,
+  color: "var(--text-main)",
 };
 
 const dialogCopyStyle: React.CSSProperties = {
-  marginTop: 10,
+  marginTop: 12,
   fontSize: 14,
   lineHeight: 1.5,
-  color: "#a6adc8",
+  color: "var(--text-muted)",
 };
 
 const dialogInputStyle: React.CSSProperties = {
   width: "100%",
-  marginTop: 14,
+  marginTop: 16,
   padding: "12px 14px",
-  borderRadius: 10,
-  border: "1px solid #45475a",
-  background: "#11111b",
-  color: "#cdd6f4",
-  fontSize: 15,
+  borderRadius: 8,
+  border: "1px solid var(--border-subtle)",
+  background: "rgba(255, 255, 255, 0.04)",
+  color: "var(--text-main)",
+  fontSize: 14,
   outline: "none",
 };
 
@@ -792,33 +793,34 @@ const dialogActionsStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "flex-end",
   gap: 10,
-  marginTop: 18,
+  marginTop: 24,
 };
 
 const dialogButtonBaseStyle: React.CSSProperties = {
-  padding: "10px 14px",
-  borderRadius: 10,
+  padding: "10px 16px",
+  borderRadius: 8,
   border: "1px solid transparent",
-  fontSize: 14,
+  fontSize: 13,
   fontWeight: 600,
   cursor: "pointer",
+  transition: "all 0.2s ease",
 };
 
 const dialogSecondaryButtonStyle: React.CSSProperties = {
   ...dialogButtonBaseStyle,
-  borderColor: "#45475a",
-  background: "transparent",
-  color: "#cdd6f4",
+  borderColor: "var(--border-subtle)",
+  background: "var(--bg-hover)",
+  color: "var(--text-muted)",
 };
 
 const dialogPrimaryButtonStyle: React.CSSProperties = {
   ...dialogButtonBaseStyle,
-  background: "#89b4fa",
-  color: "#11111b",
+  background: "var(--accent-blue)",
+  color: "#ffffff",
 };
 
 const dialogDangerButtonStyle: React.CSSProperties = {
   ...dialogButtonBaseStyle,
   background: "#f38ba8",
-  color: "#11111b",
+  color: "#ffffff",
 };

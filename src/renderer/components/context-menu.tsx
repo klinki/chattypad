@@ -27,12 +27,12 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
         position: "fixed",
         top: y,
         left: x,
-        background: "#181825",
-        border: "1px solid #313244",
-        borderRadius: 8,
-        padding: "4px 0",
-        minWidth: 160,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        background: "var(--bg-sidebar)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 6,
+        padding: "6px 0",
+        minWidth: 180,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
         zIndex: 1000,
       }}
       onClick={(e) => e.stopPropagation()}
@@ -51,19 +51,20 @@ function ContextMenuItem({ item, onClose }: { item: MenuItem; onClose: () => voi
     <div
       style={{
         position: "relative",
-        padding: "6px 12px",
+        padding: "8px 14px",
         fontSize: 13,
-        color: item.danger ? "#f38ba8" : "#cdd6f4",
+        color: item.danger ? "#f38ba8" : "var(--text-main)",
         cursor: "pointer",
         display: "flex",
         justifyContent: "space-between",
+        transition: "background-color 0.15s ease",
       }}
       onMouseEnter={(e) => {
-        (e.target as HTMLDivElement).style.backgroundColor = "#313244";
+        (e.currentTarget as HTMLDivElement).style.backgroundColor = "var(--bg-hover)";
         setShowSub(true);
       }}
       onMouseLeave={(e) => {
-        (e.target as HTMLDivElement).style.backgroundColor = "transparent";
+        (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
         setShowSub(false);
       }}
       onClick={() => {
@@ -81,12 +82,12 @@ function ContextMenuItem({ item, onClose }: { item: MenuItem; onClose: () => voi
             position: "absolute",
             top: 0,
             left: "100%",
-            background: "#181825",
-            border: "1px solid #313244",
-            borderRadius: 8,
-            padding: "4px 0",
-            minWidth: 160,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            background: "var(--bg-sidebar)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 6,
+            padding: "6px 0",
+            minWidth: 180,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
           }}
         >
           {item.submenu.map((sub, idx) => (

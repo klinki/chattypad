@@ -17,9 +17,11 @@ ChattyPad uses a monochromatic dark theme with a single accent color for primary
 | `--bg-header` | `#111113` | Top navigation and window control backgrounds. |
 | `--bg-hover` | `rgba(255, 255, 255, 0.05)` | Hover states for buttons and menu items. |
 | `--bg-active` | `rgba(255, 255, 255, 0.08)` | Selected/Active states for threads/projects. |
+| `--accent-blue` | `#1e66f5` | Primary action color (Send buttons, positive dialogs). |
 | `--accent` | `#7c7cfc` | Secondary highlight purple. |
 | `--text-main` | `#e1e1e1` | Primary readable text (90% white). |
 | `--text-muted` | `#8e9099` | Secondary text, labels, and icons. |
+| `--text-error` | `#f38ba8` | Error states and danger actions. |
 | `--border-subtle` | `rgba(255, 255, 255, 0.06)` | Unified border color for separators and pods. |
 
 ---
@@ -67,12 +69,17 @@ Used for both the **Message Composer** and **Message Bubbles**.
 - **Style**: `background: rgba(255, 255, 255, 0.04)`, `border: 1px solid var(--border-subtle)`.
 - **Goal**: To make interactive content feel "inset" into the application surface without using heavy shadows or solid colors.
 
-### 2. The Integrated Action
+### 2. The Glass Overlay
+Used for **Dialogs**, **Search Overlay**, and **Lock Screen**.
+- **Style**: `background: rgba(0, 0, 0, 0.4)`, `backdrop-filter: blur(4px)`.
+- **Goal**: To provide depth and focus by subtly blurring the background content while maintaining a lightweight, modern feel.
+
+### 3. The Integrated Action
 Send buttons and secondary actions are nested *inside* the containers they support.
 - **Example**: The Send icon is absolutely positioned at the bottom-right of the textarea pod.
 
-### 3. Accordion Navigation
+### 4. Accordion Navigation
 Sidebar projects use a smooth `max-height` transition for collapse states, avoiding the "jumping" effect of instant toggles.
 
-### 4. Custom Scrollers
+### 5. Custom Scrollers
 Browser scrollbars are replaced with a minimal `5px` wide track using `#ffffff1a` thumb color to ensure they never break the minimalist dark theme.
