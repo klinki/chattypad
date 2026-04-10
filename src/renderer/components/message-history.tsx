@@ -119,7 +119,12 @@ function MessageBubble({
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
 
-  const roleLabel = isSystem ? "System" : isUser ? "You" : "Assistant";
+  const dateLabel = new Date(message.createdAt).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <div
@@ -139,16 +144,16 @@ function MessageBubble({
     >
       <div
         style={{
-          fontSize: 11,
-          fontWeight: 600,
+          fontSize: 10,
+          fontWeight: 500,
           textTransform: "uppercase",
           letterSpacing: "0.05em",
           color: "var(--text-muted)",
-          marginBottom: 8,
-          opacity: 0.8,
+          marginBottom: 6,
+          opacity: 0.6,
         }}
       >
-        {roleLabel}
+        {dateLabel}
       </div>
       <div
          style={{
