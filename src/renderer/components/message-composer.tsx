@@ -51,8 +51,8 @@ export function MessageComposer({
     <div
       style={{
         padding: "16px",
-        borderTop: "1px solid #313244",
-        background: "#1e1e2e",
+        borderTop: "1px solid var(--border-subtle)",
+        background: "var(--bg-sidebar)",
         display: "flex",
         flexDirection: "column",
         gap: 6,
@@ -90,9 +90,9 @@ export function MessageComposer({
           style={{
             flex: 1,
             resize: "none",
-            background: "#313244",
-            color: "#cdd6f4",
-            border: "1px solid #45475a",
+            background: "rgba(255, 255, 255, 0.05)",
+            color: "var(--text-main)",
+            border: "1px solid var(--border-subtle)",
             borderRadius: 8,
             padding: "12px",
             fontSize: 14,
