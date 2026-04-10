@@ -67,8 +67,9 @@ export function MessageHistory({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#585b70",
+          color: "var(--text-muted)",
           fontSize: 14,
+          background: "var(--bg-darker)",
         }}
       >
         No messages yet. Start the conversation below.
@@ -81,10 +82,11 @@ export function MessageHistory({
       style={{
         flex: 1,
         overflowY: "auto",
-        padding: "16px 20px",
+        padding: "32px 20px",
         display: "flex",
         flexDirection: "column",
-        gap: 12,
+        gap: 32,
+        background: "var(--bg-darker)",
       }}
       role="log"
       aria-label="Conversation history"
@@ -118,7 +120,6 @@ function MessageBubble({
   const isSystem = message.role === "system";
 
   const roleLabel = isSystem ? "System" : isUser ? "You" : "Assistant";
-  const bubbleColor = isSystem ? "#313244" : isUser ? "#1e66f5" : "#313244";
 
   return (
     <div
@@ -126,38 +127,40 @@ function MessageBubble({
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: isUser ? "flex-end" : "flex-start",
-        maxWidth: "80%",
-        alignSelf: isUser ? "flex-end" : "flex-start",
-        borderRadius: 14,
-        padding: isHighlighted ? 6 : 0,
-        margin: isHighlighted ? -6 : 0,
-        background: isHighlighted ? "rgba(250, 179, 135, 0.16)" : "transparent",
-        boxShadow: isHighlighted ? "0 0 0 1px rgba(250, 179, 135, 0.34)" : "none",
-        transition: "background-color 0.25s ease, box-shadow 0.25s ease",
+        alignItems: "flex-start",
+        marginLeft: 200,
+        maxWidth: "min(900px, calc(100% - 240px))",
+        alignSelf: "flex-start",
+        padding: isHighlighted ? 8 : 0,
+        background: isHighlighted ? "var(--bg-active)" : "transparent",
+        borderRadius: 8,
+        transition: "all 0.2s ease",
       }}
     >
       <div
         style={{
-          fontSize: 12,
-          color: "#585b70",
-          marginBottom: 4,
-          paddingLeft: isUser ? 0 : 4,
-          paddingRight: isUser ? 4 : 0,
+          fontSize: 11,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: "var(--text-muted)",
+          marginBottom: 8,
+          opacity: 0.8,
         }}
       >
         {roleLabel}
       </div>
       <div
-        style={{
-          background: bubbleColor,
-          color: "#cdd6f4",
-          borderRadius: isUser ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
-          padding: "10px 14px",
-          fontSize: 15,
+         style={{
+          background: "rgba(255, 255, 255, 0.04)",
+          color: "var(--text-main)",
+          fontSize: 14,
           lineHeight: 1.6,
           wordBreak: "break-word",
           whiteSpace: "pre-wrap",
+          padding: "12px 16px",
+          borderRadius: 12,
+          border: "1px solid var(--border-subtle)",
         }}
       >
         {message.content}
