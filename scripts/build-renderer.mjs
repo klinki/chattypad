@@ -29,3 +29,9 @@ if (!existsSync(dirname(htmlTarget))) {
 }
 
 cpSync(htmlSource, htmlTarget);
+
+const cssSource = resolve(repoRoot, "src/renderer/index.css");
+const cssTarget = resolve(outDir, "index.css");
+if (existsSync(cssSource)) {
+  cpSync(cssSource, cssTarget);
+}

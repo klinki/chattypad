@@ -103,11 +103,12 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
 
   return (
     <nav
+      className="sidebar-container"
       style={{
         width: 280,
         minWidth: 180,
-        background: "#181825",
-        borderRight: "1px solid #313244",
+        background: "var(--bg-sidebar)",
+        borderRight: "1px solid var(--border-subtle)",
         display: "flex",
         flexDirection: "column",
         overflowY: "auto",
@@ -126,36 +127,39 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
       >
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: "#6c7086",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+            color: "var(--text-muted)",
             textTransform: "uppercase",
+            opacity: 0.8,
           }}
         >
           Workspace
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
             type="button"
+            className="top-action-btn"
             onClick={props.onOpenSettings}
             disabled={props.isBusy}
             title="Open settings"
-            style={{ ...actionButtonStyle, padding: "4px 8px", fontSize: 12 }}
           >
             Settings
           </button>
           <button
             type="button"
+            className="top-action-btn"
             onClick={props.onLockAllProjects}
             disabled={props.isBusy}
             title="Lock all encrypted projects"
-            style={{ ...actionButtonStyle, padding: "4px 8px", fontSize: 14 }}
+            style={{ fontSize: 14 }}
           >
             🔒
           </button>
           <button
             type="button"
+            className="top-action-btn"
             ref={createButtonRef}
             onContextMenu={(event) => {
               event.preventDefault();
@@ -169,7 +173,7 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
               }
             }}
             disabled={props.isBusy}
-            style={actionButtonStyle}
+            style={{ fontSize: 18, padding: "2px 8px" }}
           >
             +
           </button>
@@ -215,7 +219,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    marginBottom: 8,
+    marginBottom: 2,
   };
 
   const [tempProjectName, setTempProjectName] = useState(project.name);
@@ -267,12 +271,15 @@ function ProjectItem({ project, props, setContextMenu }: any) {
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
+        className="sidebar-item-container project-header"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 4,
-          padding: "6px 12px",
+          padding: "4px 8px",
+          cursor: "default",
+          minHeight: 28,
         }}
         {...listeners}
         onContextMenu={onContextMenu}
@@ -288,19 +295,14 @@ function ProjectItem({ project, props, setContextMenu }: any) {
           onPointerDown={(e) => e.stopPropagation()}
           disabled={isTreeLocked}
           title={isTreeLocked ? "Unlock project to expand threads" : undefined}
+          className="btn-subtle"
           style={{
-            background: "transparent",
-            border: "none",
-            color: "#6c7086",
             cursor: isTreeLocked ? "not-allowed" : "pointer",
-            opacity: isTreeLocked ? 0.55 : 1,
-            fontSize: 10,
-            padding: "2px 4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            fontSize: 9,
+            width: 20,
+            height: 20,
             transform: isTreeCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
-            transition: "transform 0.15s ease",
+            transition: "transform 0.2s ease",
           }}
           aria-label={isTreeCollapsed ? "Expand" : "Collapse"}
         >
@@ -328,14 +330,16 @@ function ProjectItem({ project, props, setContextMenu }: any) {
         ) : (
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#a6adc8",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text-main)",
               userSelect: "none",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               flex: 1,
+              marginLeft: 4,
+              opacity: 0.9,
             }}
             title={project.name}
             onDoubleClick={() => props.onSetEditingItemId(project.id)}
@@ -387,20 +391,25 @@ function ProjectItem({ project, props, setContextMenu }: any) {
               disabled={props.isBusy}
               aria-label={`Create thread in ${project.name}`}
               title={`Create thread in ${project.name}`}
-              style={iconButtonStyle}
+              className="btn-subtle"
+              style={{ fontSize: 16 }}
             >
               +
             </button>
           </div>
         )}
       </div>
-      {!isTreeCollapsed && (
-        threads.length === 0 ? (
+
+      <div 
+        className={`project-threads-container ${isTreeCollapsed ? 'collapsed' : ''}`}
+        style={{ maxHeight: isTreeCollapsed ? 0 : 1000 }}
+      >
+        {threads.length === 0 ? (
           <div
             style={{
-              padding: "6px 24px",
-              fontSize: 13,
-              color: "#585b70",
+              padding: "4px 32px",
+              fontSize: 12,
+              color: "var(--text-muted)",
               fontStyle: "italic",
             }}
           >
@@ -426,8 +435,8 @@ function ProjectItem({ project, props, setContextMenu }: any) {
               );
             })}
           </SortableContext>
-        )
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -499,26 +508,28 @@ function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingI
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onContextMenu={onContextMenu}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onContextMenu={onContextMenu} className="sidebar-item-container">
       <button
         onClick={() => onSelectThread(thread.id)}
         onDoubleClick={() => onSetEditingItemId(thread.id)}
         aria-current={isActive ? "page" : undefined}
+        className={`thread-item ${isActive ? 'active' : ''}`}
         style={{
           display: "block",
           width: "100%",
           textAlign: "left",
-          padding: "7px 12px 7px 24px",
-          fontSize: 14,
-          color: isActive ? "#cdd6f4" : "#a6adc8",
-          background: isActive ? "#313244" : "transparent",
+          padding: "5px 8px 5px 32px",
+          fontSize: 12,
+          color: isActive ? "#fff" : "var(--text-muted)",
+          background: "transparent",
           border: "none",
           cursor: "pointer",
-          borderRadius: 4,
+          borderRadius: 6,
           marginBottom: 1,
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
+          outline: "none",
         }}
       >
         {thread.title}

@@ -1,0 +1,129 @@
+/* Global Styles */
+:root {
+  --bg-darker: #0c0c0e;
+  --bg-sidebar: #111113;
+  --bg-header: #111113;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.08);
+  --text-main: #e1e1e1;
+  --text-muted: #8e9099;
+  --accent: #7c7cfc;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-darker);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Overhaul */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Sidebar Animations and Interactions */
+.sidebar-item-container {
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  margin: 0 8px;
+}
+
+.sidebar-item-container:hover {
+  background-color: var(--bg-hover);
+}
+
+.thread-item {
+  transition: all 0.2s ease;
+  border-left: 2px solid transparent;
+}
+
+.thread-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.thread-item.active {
+  background-color: var(--bg-active);
+  color: #fff;
+}
+
+/* Accordion Animation */
+.project-threads-container {
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  opacity: 1;
+}
+
+.project-threads-container.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Plus Button Subtlety */
+.btn-subtle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.btn-subtle:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  opacity: 1;
+}
+
+.project-header:hover .btn-subtle {
+  opacity: 1;
+}
+
+/* Top Action Buttons */
+.top-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--border-subtle);
+}

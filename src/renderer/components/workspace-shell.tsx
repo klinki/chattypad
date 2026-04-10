@@ -61,12 +61,12 @@ export function EmptyState(): React.ReactElement {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        color: "#585b70",
+        color: "var(--text-muted)",
         gap: 8,
       }}
     >
       <div style={{ fontSize: 32 }}>💬</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8" }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-main)" }}>
         No active thread
       </div>
       <div style={{ fontSize: 14, maxWidth: 280, textAlign: "center" }}>
@@ -86,12 +86,12 @@ export function WorkspaceEmptyState(): React.ReactElement {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        color: "#585b70",
+        color: "var(--text-muted)",
         gap: 8,
       }}
     >
       <div style={{ fontSize: 32 }}>🗂️</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "#a6adc8", textAlign: "center", maxWidth: 400 }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text-main)", textAlign: "center", maxWidth: 400 }}>
         To start working, let's create a first project and thread
       </div>
       <div style={{ fontSize: 14, maxWidth: 320, textAlign: "center" }}>
@@ -109,7 +109,7 @@ function LoadingState(): React.ReactElement {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "#585b70",
+        color: "var(--text-muted)",
         fontSize: 15,
       }}
     >

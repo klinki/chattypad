@@ -27,13 +27,10 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background:
-          mode === "frameless"
-            ? "#1e1e2e"
-            : "linear-gradient(180deg, #181825 0%, #1e1e2e 100%)",
-        color: "#cdd6f4",
+        background: "var(--bg-header)",
+        color: "var(--text-main)",
         userSelect: "none",
-        borderBottom: "1px solid #313244",
+        borderBottom: "1px solid var(--border-subtle)",
         flexShrink: 0,
       }}
     >
@@ -53,13 +50,13 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
         } as any}
         onDoubleClick={mode === "frameless" ? handleMaximize : undefined}
       >
-        <div style={{ fontSize: "12px", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: "12px", fontWeight: "600", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)" }}>
           ChattyPad
         </div>
         {subtitle ? (
           <>
-            <div style={{ width: 1, height: 14, background: "#45475a" }} />
-            <div style={{ fontSize: "12px", color: "#a6adc8" }}>
+            <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
+            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
               {subtitle}
             </div>
           </>
@@ -160,26 +157,15 @@ function HeaderActionButton({
   return (
     <button
       type="button"
+      className="top-action-btn"
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
       title={title ?? label}
       disabled={disabled}
       style={{
         marginRight: "8px",
-        padding: "8px 12px",
-        borderRadius: 8,
-        border: "1px solid #45475a",
-        background: isHovered ? "#313244" : "#262637",
-        color: "#cdd6f4",
-        fontSize: "12px",
-        fontWeight: 700,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-        outline: "none",
-        transition: "background-color 0.1s ease, opacity 0.1s ease",
+        padding: "6px 12px",
+        fontWeight: 600,
+        opacity: disabled ? 0.4 : 1,
         WebkitAppRegion: "no-drag",
       } as any}
     >
