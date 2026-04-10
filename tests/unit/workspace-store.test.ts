@@ -52,4 +52,38 @@ describe("workspaceStore", () => {
       "2026-03-23T10:00:00.000Z"
     );
   });
+
+  test("setActiveThread can carry a one-shot revealed message id", () => {
+    workspaceStore.setSnapshot({
+      projectGroups: [],
+      projects: [],
+      threadsByProject: {},
+      activeThreadId: null,
+    });
+
+    workspaceStore.setActiveThread(
+      {
+        thread: {
+          id: "t1",
+          projectId: "p1",
+          title: "Reveal target",
+          sortOrder: 0,
+          lastMessageAt: null,
+        },
+        messages: [
+          {
+            id: "m2",
+            threadId: "t1",
+            role: "user",
+            content: "Scroll here",
+            createdAt: "2026-04-07T10:00:00.000Z",
+            sequenceNumber: 1,
+          },
+        ],
+      },
+      { revealedMessageId: "m2" }
+    );
+
+    expect(workspaceStore.getState().revealedMessageId).toBe("m2");
+  });
 });

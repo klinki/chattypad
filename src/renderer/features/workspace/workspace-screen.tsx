@@ -19,6 +19,7 @@ import { MessageHistory } from "../../components/message-history.js";
 import { Header } from "../../components/header.js";
 import { MessageComposer } from "../../components/message-composer.js";
 import { LockScreen } from "../../components/lock-screen.js";
+import { SearchOverlay } from "../../components/search-overlay.js";
 import { SettingsScreen } from "../settings/settings-screen.js";
 import { WindowResizeHandles } from "../../components/window-resize-handles.js";
 import type { WorkspaceState } from "../../state/workspace-store.js";
@@ -130,8 +131,44 @@ export function WorkspaceScreen(): React.ReactElement {
     };
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        if (isSettingsScreenOpen) {
+          return;
+        }
+
+        event.preventDefault();
+        controller.openSearch();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSettingsScreenOpen]);
+
   const handleSelectThread = useCallback((threadId: string) => {
     controller.openThread(threadId);
+  }, []);
+
+  const handleOpenSearch = useCallback(() => {
+    controller.openSearch();
+  }, []);
+
+  const handleCloseSearch = useCallback(() => {
+    controller.closeSearch();
+  }, []);
+
+  const handleSearchQueryChange = useCallback((query: string) => {
+    void controller.searchWorkspace(query);
+  }, []);
+
+  const handleOpenSearchResult = useCallback((result: Parameters<typeof controller.openSearchResult>[0]) => {
+    void controller.openSearchResult(result);
+  }, []);
+
+  const handleSearchResultSelection = useCallback((resultId: string | null) => {
+    controller.setSelectedSearchResultId(resultId);
   }, []);
 
   const handleSend = useCallback(() => {
@@ -409,8 +446,12 @@ export function WorkspaceScreen(): React.ReactElement {
       />
     ) : (
       <>
-        <ThreadHeader thread={state.activeThread.thread} />
-        <MessageHistory messages={state.activeThread.messages} />
+      <ThreadHeader thread={state.activeThread.thread} />
+        <MessageHistory
+          messages={state.activeThread.messages}
+          revealedMessageId={state.revealedMessageId}
+          onRevealHandled={() => workspaceStore.setRevealedMessageId(null)}
+        />
         <MessageComposer
           value={state.composeText}
           onChange={(text) => workspaceStore.setComposeText(text)}
@@ -437,7 +478,16 @@ export function WorkspaceScreen(): React.ReactElement {
   ) : (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       {windowMode === "frameless" ? <WindowResizeHandles /> : null}
-      <Header mode={windowMode === "native" ? "inline" : "frameless"} subtitle="Workspace" />
+      <Header
+        mode={windowMode === "native" ? "inline" : "frameless"}
+        subtitle="Workspace"
+        action={{
+          label: "Search",
+          onClick: handleOpenSearch,
+          title: "Search workspace (Ctrl/Cmd+K)",
+          disabled: false,
+        }}
+      />
       <div style={{ flex: 1, minHeight: 0 }}>
         <WorkspaceShell
           sidebar={sidebar}
@@ -477,6 +527,18 @@ export function WorkspaceScreen(): React.ReactElement {
           hasSnapshot={state.snapshot !== null}
         />
       </div>
+      <SearchOverlay
+        isOpen={state.isSearchOpen}
+        query={state.searchQuery}
+        results={state.searchResults}
+        isLoading={state.isSearchLoading}
+        error={state.searchError}
+        selectedResultId={state.selectedSearchResultId}
+        onQueryChange={handleSearchQueryChange}
+        onClose={handleCloseSearch}
+        onSelectResultId={handleSearchResultSelection}
+        onOpenResult={handleOpenSearchResult}
+      />
     </div>
   );
 }

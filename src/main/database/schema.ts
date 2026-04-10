@@ -3,6 +3,7 @@
  * Creates the projects, chat_threads, and messages tables if they do not exist.
  */
 import type { Database } from "bun:sqlite";
+import { rebuildSearchIndexes } from "./search-repository.js";
 
 export function initializeSchema(db: Database): void {
   db.exec(`
@@ -51,6 +52,23 @@ export function initializeSchema(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_threads_sort_order    ON chat_threads(project_id, sort_order);
     CREATE INDEX IF NOT EXISTS idx_messages_thread_id    ON messages(thread_id);
     CREATE INDEX IF NOT EXISTS idx_messages_sequence     ON messages(thread_id, sequence_number);
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS thread_search_index USING fts5(
+      thread_id UNINDEXED,
+      project_id UNINDEXED,
+      title,
+      activity_at UNINDEXED,
+      tokenize='trigram'
+    );
+
+    CREATE VIRTUAL TABLE IF NOT EXISTS message_search_index USING fts5(
+      message_id UNINDEXED,
+      thread_id UNINDEXED,
+      project_id UNINDEXED,
+      content,
+      created_at UNINDEXED,
+      tokenize='trigram'
+    );
   `);
 
   // Attempt to add new columns to existing projects table (will fail silently if they already exist)
@@ -69,4 +87,6 @@ export function initializeSchema(db: Database): void {
       // Ignore errors (column likely already exists)
     }
   }
+
+  rebuildSearchIndexes(db);
 }

@@ -13,6 +13,8 @@ import type {
   ReorderRequest,
   ThreadCreateRequest,
   ThreadUpdateRequest,
+  WorkspaceSearchRequest,
+  WorkspaceSearchResult,
   WorkspaceSnapshot,
   WindowFrame,
   WindowFrameUpdateRequest,
@@ -91,6 +93,10 @@ export interface WorkspaceElectrobunRpcSchema {
       [IPC_CHANNELS.MESSAGE_SEND]: {
         params: MessageSendRequest;
         response: IpcResult<ActiveThreadDetail>;
+      };
+      [IPC_CHANNELS.WORKSPACE_SEARCH]: {
+        params: WorkspaceSearchRequest;
+        response: IpcResult<WorkspaceSearchResult[]>;
       };
       [IPC_CHANNELS.PROJECT_UNLOCK]: {
         params: ProjectUnlockRequest;

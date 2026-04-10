@@ -29,6 +29,10 @@ import {
   updateThreadSortOrder,
   updateThreadTitle,
 } from "../database/workspace-repository.js";
+import {
+  deleteSearchEntriesForProject,
+  upsertThreadSearchEntry,
+} from "../database/search-repository.js";
 import type { ChatThread, Project, ProjectGroup } from "../../shared/models/workspace.js";
 import type {
   WorkspaceSnapshot,
@@ -235,6 +239,7 @@ export async function removeProject(
 
   return withIpcErrorAsync(async () => {
     deleteProject(db, projectId);
+    deleteSearchEntriesForProject(db, projectId);
     return buildWorkspaceSnapshot(db);
   }, {
     fallbackCode: "PROJECT_DELETE_FAILED",
@@ -292,6 +297,7 @@ export async function createThread(
     };
 
     insertThread(db, thread);
+    upsertThreadSearchEntry(db, thread.id);
     return buildWorkspaceSnapshotWithActiveThread(db, thread.id);
   }, {
     fallbackCode: "THREAD_CREATE_FAILED",
@@ -490,6 +496,7 @@ export async function updateThread(
     }
 
     updateThreadTitle(db, threadId, titleToStore);
+    upsertThreadSearchEntry(db, threadId);
     return buildWorkspaceSnapshot(db);
   }, {
     fallbackCode: "THREAD_UPDATE_FAILED",

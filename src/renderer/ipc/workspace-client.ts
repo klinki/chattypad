@@ -10,6 +10,7 @@ import type {
   IpcChannel,
   ProjectCreateRequest,
   ProjectDeleteRequest,
+  WorkspaceSearchResult,
   ThreadCreateRequest,
   WindowFrame,
   WindowFrameUpdateRequest,
@@ -36,6 +37,7 @@ export interface WorkspaceIpcClient {
   reorderProject(projectId: string, targetSortOrder: number): Promise<IpcResult<WorkspaceSnapshot>>;
   reorderThread(threadId: string, targetSortOrder: number): Promise<IpcResult<WorkspaceSnapshot>>;
   openThread(threadId: string): Promise<IpcResult<ActiveThreadDetail>>;
+  searchWorkspace(query: string, limit?: number): Promise<IpcResult<WorkspaceSearchResult[]>>;
   sendMessage(
     threadId: string,
     content: string,
@@ -132,6 +134,11 @@ export const workspaceIpcClient: WorkspaceIpcClient = {
     invokeIpc(IPC_CHANNELS.THREAD_REORDER, { itemId: threadId, targetSortOrder }),
   openThread: (threadId: ThreadOpenRequest["threadId"]) =>
     invokeIpc(IPC_CHANNELS.THREAD_OPEN, { threadId }),
+  searchWorkspace: (query, limit) =>
+    invokeIpc(IPC_CHANNELS.WORKSPACE_SEARCH, {
+      query,
+      ...(limit !== undefined ? { limit } : {}),
+    }),
   sendMessage: (threadId, content, role) =>
     invokeIpc(IPC_CHANNELS.MESSAGE_SEND, {
       threadId,

@@ -50,6 +50,26 @@ export interface ActiveThreadDetail {
   messages: MessageView[];
 }
 
+export interface WorkspaceSearchRequest {
+  query: string;
+  limit?: number;
+}
+
+export type WorkspaceSearchResultKind = "thread" | "message";
+
+export interface WorkspaceSearchResult {
+  id: string;
+  kind: WorkspaceSearchResultKind;
+  projectId: string;
+  projectName: string;
+  threadId: string;
+  threadTitle: string;
+  messageId?: string;
+  snippet: string;
+  activityAt: string | null;
+  messageCreatedAt?: string | null;
+}
+
 export interface WindowFrame {
   x: number;
   y: number;
@@ -142,6 +162,7 @@ export const IPC_CHANNELS = {
   THREAD_REORDER: "thread:reorder",
   THREAD_OPEN: "thread:open",
   MESSAGE_SEND: "message:send",
+  WORKSPACE_SEARCH: "workspace:search",
   PROJECT_UNLOCK: "project:unlock",
   PROJECT_LOCK: "project:lock",
   PROJECT_LOCK_ALL: "project:lock-all",

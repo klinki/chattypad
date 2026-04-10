@@ -26,6 +26,7 @@ function createClient(overrides: Partial<WorkspaceIpcClient>): WorkspaceIpcClien
     reorderProject: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
     reorderThread: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
     openThread: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
+    searchWorkspace: async () => ({ success: true, data: [] }),
     sendMessage: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
     getWindowFrame: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
     setWindowFrame: async () => ({ success: false, error: { code: "UNUSED", message: "unused", recoverable: true } }),
@@ -392,5 +393,85 @@ describe("workspace controller unlock flow", () => {
     expect(state.snapshot?.activeThreadId).toBeNull();
     expect(state.activeThread).toBeNull();
     expect(openThreadCalls).toEqual([]);
+  });
+
+  test("search stores results and selects the first match", async () => {
+    const controller = createWorkspaceController(
+      createClient({
+        searchWorkspace: async () => ({
+          success: true,
+          data: [
+            {
+              id: "thread:t1",
+              kind: "thread",
+              projectId: "p1",
+              projectName: "Project",
+              threadId: "t1",
+              threadTitle: "Search Alpha",
+              snippet: "Search Alpha",
+              activityAt: "2026-04-07T10:00:00.000Z",
+            },
+          ],
+        }),
+      })
+    );
+
+    controller.openSearch();
+    await controller.searchWorkspace("search");
+
+    const state = workspaceStore.getState();
+    expect(state.isSearchOpen).toBe(true);
+    expect(state.searchQuery).toBe("search");
+    expect(state.searchResults).toHaveLength(1);
+    expect(state.selectedSearchResultId).toBe("thread:t1");
+  });
+
+  test("opening a message search result reveals the matched message", async () => {
+    const controller = createWorkspaceController(
+      createClient({
+        openThread: async () => ({
+          success: true,
+          data: {
+            thread: {
+              id: "t1",
+              projectId: "p1",
+              title: "Search Thread",
+              sortOrder: 0,
+              lastMessageAt: "2026-04-07T10:00:00.000Z",
+            },
+            messages: [
+              {
+                id: "m1",
+                threadId: "t1",
+                role: "user",
+                content: "Message match",
+                createdAt: "2026-04-07T09:59:00.000Z",
+                sequenceNumber: 1,
+              },
+            ],
+          },
+        }),
+      })
+    );
+
+    controller.openSearch();
+    const didOpen = await controller.openSearchResult({
+      id: "message:m1",
+      kind: "message",
+      projectId: "p1",
+      projectName: "Project",
+      threadId: "t1",
+      threadTitle: "Search Thread",
+      messageId: "m1",
+      snippet: "Message match",
+      activityAt: "2026-04-07T10:00:00.000Z",
+      messageCreatedAt: "2026-04-07T09:59:00.000Z",
+    });
+
+    const state = workspaceStore.getState();
+    expect(didOpen).toBe(true);
+    expect(state.activeThread?.thread.id).toBe("t1");
+    expect(state.revealedMessageId).toBe("m1");
+    expect(state.isSearchOpen).toBe(false);
   });
 });

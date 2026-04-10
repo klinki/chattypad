@@ -7,6 +7,7 @@ import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
   IpcError,
+  WorkspaceSearchResult,
 } from "../../shared/contracts/workspace.js";
 
 export interface WorkspaceState {
@@ -17,6 +18,13 @@ export interface WorkspaceState {
   composeText: string;
   sendError: IpcError | null;
   unlockedKeys: Record<string, CryptoKey>;
+  isSearchOpen: boolean;
+  searchQuery: string;
+  searchResults: WorkspaceSearchResult[];
+  isSearchLoading: boolean;
+  searchError: IpcError | null;
+  selectedSearchResultId: string | null;
+  revealedMessageId: string | null;
 }
 
 type Listener = (state: WorkspaceState) => void;
@@ -29,6 +37,13 @@ const initialState: WorkspaceState = {
   composeText: "",
   sendError: null,
   unlockedKeys: {},
+  isSearchOpen: false,
+  searchQuery: "",
+  searchResults: [],
+  isSearchLoading: false,
+  searchError: null,
+  selectedSearchResultId: null,
+  revealedMessageId: null,
 };
 
 let state: WorkspaceState = { ...initialState };
@@ -102,13 +117,17 @@ export const workspaceStore = {
     });
   },
 
-  setActiveThread(detail: ActiveThreadDetail): void {
+  setActiveThread(
+    detail: ActiveThreadDetail,
+    options?: { revealedMessageId?: string | null }
+  ): void {
     setState({
       activeThread: detail,
       snapshot: updateActiveThreadSummary(detail) ?? state.snapshot,
       sendError: null,
       error: null,
       isLoading: false,
+      revealedMessageId: options?.revealedMessageId ?? null,
     });
   },
 
@@ -128,12 +147,57 @@ export const workspaceStore = {
     setState({ composeText });
   },
 
+  openSearch(): void {
+    setState({ isSearchOpen: true });
+  },
+
+  closeSearch(): void {
+    setState({
+      isSearchOpen: false,
+      searchQuery: "",
+      searchResults: [],
+      isSearchLoading: false,
+      searchError: null,
+      selectedSearchResultId: null,
+    });
+  },
+
+  setSearchQuery(searchQuery: string): void {
+    setState({ searchQuery });
+  },
+
+  setSearchLoading(isSearchLoading: boolean): void {
+    setState({ isSearchLoading });
+  },
+
+  setSearchError(searchError: IpcError | null): void {
+    setState({ searchError, isSearchLoading: false });
+  },
+
+  setSearchResults(searchResults: WorkspaceSearchResult[]): void {
+    setState({
+      searchResults,
+      isSearchLoading: false,
+      searchError: null,
+      selectedSearchResultId: searchResults[0]?.id ?? null,
+    });
+  },
+
+  setSelectedSearchResultId(selectedSearchResultId: string | null): void {
+    setState({ selectedSearchResultId });
+  },
+
+  setRevealedMessageId(revealedMessageId: string | null): void {
+    setState({ revealedMessageId });
+  },
+
   appendMessage(detail: ActiveThreadDetail): void {
     setState({
       activeThread: detail,
       snapshot: updateActiveThreadSummary(detail) ?? state.snapshot,
       composeText: "",
       sendError: null,
+      revealedMessageId: null,
     });
   },
 

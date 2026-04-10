@@ -31,6 +31,7 @@ import {
   lockAllProjects,
 } from "../app/workspace-service.js";
 import { sendMessage } from "../app/message-service.js";
+import { searchWorkspace } from "../app/search-service.js";
 import type {
   WorkspaceSnapshot,
   ActiveThreadDetail,
@@ -47,6 +48,8 @@ import type {
   ReorderRequest,
   ThreadUpdateRequest,
   ThreadCreateRequest,
+  WorkspaceSearchRequest,
+  WorkspaceSearchResult,
 } from "../../shared/contracts/workspace.js";
 import { IPC_CHANNELS as CHANNELS } from "../../shared/contracts/workspace.js";
 import type {
@@ -57,7 +60,7 @@ import type {
 const debugIpcEnabled = process.env["CHATTYPAD_DEBUG"] === "1";
 
 export interface WorkspaceHandlers {
-    handleWorkspaceLoad: () => Promise<IpcResult<WorkspaceSnapshot>>;
+  handleWorkspaceLoad: () => Promise<IpcResult<WorkspaceSnapshot>>;
   handleProjectCreate: (name: string, isEncrypted?: boolean, password?: string) => Promise<IpcResult<WorkspaceSnapshot>>;
   handleProjectDelete: (projectId: string) => Promise<IpcResult<WorkspaceSnapshot>>;
   handleProjectUpdate: (projectId: string, name?: string, isCollapsed?: boolean) => Promise<IpcResult<WorkspaceSnapshot>>;
@@ -73,6 +76,7 @@ export interface WorkspaceHandlers {
   handleProjectUnlock: (projectId: string, password: string) => Promise<IpcResult<void>>;
   handleProjectLock: (projectId: string) => IpcResult<void>;
   handleProjectLockAll: () => IpcResult<void>;
+  handleWorkspaceSearch: (query: string, limit?: number) => Promise<IpcResult<WorkspaceSearchResult[]>>;
   handleMessageSend: (
     threadId: string,
     content: string,
@@ -81,7 +85,7 @@ export interface WorkspaceHandlers {
 }
 
 export interface WorkspaceRpcRequestHandlers {
-    [CHANNELS.WORKSPACE_LOAD]: () => Promise<IpcResult<WorkspaceSnapshot>>;
+  [CHANNELS.WORKSPACE_LOAD]: () => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.PROJECT_CREATE]: (payload?: ProjectCreateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.PROJECT_DELETE]: (payload?: ProjectDeleteRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
   [CHANNELS.PROJECT_UPDATE]: (payload?: ProjectUpdateRequest) => Promise<IpcResult<WorkspaceSnapshot>>;
@@ -96,6 +100,9 @@ export interface WorkspaceRpcRequestHandlers {
   [CHANNELS.THREAD_OPEN]: (
     payload?: ThreadOpenRequest
   ) => Promise<IpcResult<ActiveThreadDetail>>;
+  [CHANNELS.WORKSPACE_SEARCH]: (
+    payload?: WorkspaceSearchRequest
+  ) => Promise<IpcResult<WorkspaceSearchResult[]>>;
   [CHANNELS.MESSAGE_SEND]: (
     payload?: MessageSendRequest
   ) => Promise<IpcResult<ActiveThreadDetail>>;
@@ -109,7 +116,7 @@ export interface WorkspaceRpcRequestHandlers {
  * Exported separately so tests can invoke handlers directly.
  */
 export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
-    return {
+  return {
     handleWorkspaceLoad: () => loadWorkspace(db),
     handleProjectCreate: (name: string, isEncrypted?: boolean, password?: string) => createProject(db, name, isEncrypted, password),
     handleProjectDelete: (projectId: string) => removeProject(db, projectId),
@@ -131,6 +138,7 @@ export function createWorkspaceHandlers(db: Database): WorkspaceHandlers {
     handleProjectUnlock: (projectId: string, password: string) => unlockProject(db, projectId, password),
     handleProjectLock: (projectId: string) => lockProject(db, projectId),
     handleProjectLockAll: () => lockAllProjects(db),
+    handleWorkspaceSearch: (query: string, limit?: number) => searchWorkspace(db, query, limit),
     handleMessageSend: (threadId: string, content: string, role: string) =>
       sendMessage(db, { threadId, content, role }),
   };
@@ -210,6 +218,15 @@ function normalizeThreadCreateRequest(
 ): ThreadCreateRequest {
   return {
     projectId: typeof payload?.projectId === "string" ? payload.projectId : "",
+  };
+}
+
+function normalizeWorkspaceSearchRequest(
+  payload?: WorkspaceSearchRequest
+): WorkspaceSearchRequest {
+  return {
+    query: typeof payload?.query === "string" ? payload.query : "",
+    limit: typeof payload?.limit === "number" ? payload.limit : undefined,
   };
 }
 
@@ -335,6 +352,16 @@ export function createWorkspaceRpcRequestHandlers(
       logRequest(
         CHANNELS.THREAD_OPEN,
         result.success ? "success" : `error ${result.error.code}`
+      );
+      return result;
+    },
+    [CHANNELS.WORKSPACE_SEARCH]: async (payload) => {
+      const request = normalizeWorkspaceSearchRequest(payload);
+      logRequest(CHANNELS.WORKSPACE_SEARCH, `request query=${request.query}`);
+      const result = await handlers.handleWorkspaceSearch(request.query, request.limit);
+      logRequest(
+        CHANNELS.WORKSPACE_SEARCH,
+        result.success ? `success count=${result.data.length}` : `error ${result.error.code}`
       );
       return result;
     },

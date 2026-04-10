@@ -14,6 +14,10 @@ import {
   threadToSummary,
   messageToView,
 } from "../database/workspace-repository.js";
+import {
+  upsertMessageSearchEntry,
+  upsertThreadSearchEntry,
+} from "../database/search-repository.js";
 import { MESSAGE_ROLES } from "../../shared/models/workspace.js";
 import type { MessageRole } from "../../shared/models/workspace.js";
 import type {
@@ -143,6 +147,9 @@ export async function sendMessage(
 
     const messages = getMessagesByThread(db, input.threadId);
     db.exec("COMMIT");
+
+    upsertMessageSearchEntry(db, message.id);
+    upsertThreadSearchEntry(db, input.threadId);
 
     // Decrypt messages for view
     const messageViews = await Promise.all(messages.map(async (m) => {

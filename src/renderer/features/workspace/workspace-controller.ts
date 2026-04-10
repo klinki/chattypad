@@ -4,7 +4,11 @@
  */
 import { workspaceStore } from "../../state/workspace-store.js";
 import type { WorkspaceIpcClient } from "../../ipc/workspace-client.js";
-import type { IpcError } from "../../../shared/contracts/workspace.js";
+import type {
+  ActiveThreadDetail,
+  IpcError,
+  WorkspaceSearchResult,
+} from "../../../shared/contracts/workspace.js";
 
 interface SnapshotApplyOptions {
   activeThreadId?: string | null;
@@ -14,6 +18,7 @@ interface SnapshotApplyOptions {
 export function createWorkspaceController(client: WorkspaceIpcClient) {
   let latestOpenRequestId = 0;
   let latestSendRequestId = 0;
+  let latestSearchRequestId = 0;
   let intendedThreadId: string | null = null;
 
   function snapshotHasThread(
@@ -68,21 +73,25 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     }
   }
 
-  async function openThread(threadId: string): Promise<void> {
+  async function openThread(threadId: string): Promise<ActiveThreadDetail | null> {
     const requestId = ++latestOpenRequestId;
     intendedThreadId = threadId;
     workspaceStore.setLoading(true);
     const result = await client.openThread(threadId);
 
     if (requestId !== latestOpenRequestId || intendedThreadId !== threadId) {
-      return;
+      return null;
     }
 
     if (result.success) {
+      workspaceStore.setRevealedMessageId(null);
       workspaceStore.setActiveThread(result.data);
+      return result.data;
     } else {
       workspaceStore.setError(result.error);
     }
+
+    return null;
   }
 
   async function loadWorkspace(): Promise<void> {
@@ -287,6 +296,71 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     }
   }
 
+  function openSearch(): void {
+    workspaceStore.openSearch();
+  }
+
+  function closeSearch(): void {
+    latestSearchRequestId += 1;
+    workspaceStore.closeSearch();
+  }
+
+  function setSelectedSearchResultId(resultId: string | null): void {
+    workspaceStore.setSelectedSearchResultId(resultId);
+  }
+
+  async function searchWorkspace(query: string, limit = 25): Promise<void> {
+    const requestId = ++latestSearchRequestId;
+    workspaceStore.setSearchQuery(query);
+
+    if (query.trim().length < 2) {
+      workspaceStore.setSearchResults([]);
+      return;
+    }
+
+    workspaceStore.setSearchLoading(true);
+    const result = await client.searchWorkspace(query, limit);
+
+    if (requestId !== latestSearchRequestId) {
+      return;
+    }
+
+    if (result.success) {
+      workspaceStore.setSearchResults(result.data);
+    } else {
+      workspaceStore.setSearchError(result.error);
+    }
+  }
+
+  async function openSearchResult(result: WorkspaceSearchResult): Promise<boolean> {
+    workspaceStore.setSelectedSearchResultId(result.id);
+    const requestId = ++latestOpenRequestId;
+    intendedThreadId = result.threadId;
+    workspaceStore.setLoading(true);
+    const openResult = await client.openThread(result.threadId);
+
+    if (requestId !== latestOpenRequestId || intendedThreadId !== result.threadId) {
+      return false;
+    }
+
+    if (!openResult.success) {
+      workspaceStore.setError(openResult.error);
+      return false;
+    }
+
+    const revealedMessageId =
+      result.kind === "message" && result.messageId
+        ? openResult.data.messages.some((message) => message.id === result.messageId)
+          ? result.messageId
+          : null
+        : null;
+
+    workspaceStore.setActiveThread(openResult.data, { revealedMessageId });
+
+    closeSearch();
+    return true;
+  }
+
   return {
     loadWorkspace,
     createProject,
@@ -302,6 +376,11 @@ export function createWorkspaceController(client: WorkspaceIpcClient) {
     lockProject,
     lockAllProjects,
     sendMessage,
+    openSearch,
+    closeSearch,
+    searchWorkspace,
+    setSelectedSearchResultId,
+    openSearchResult,
   };
 }
 
