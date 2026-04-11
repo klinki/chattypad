@@ -141,7 +141,7 @@ export function SettingsScreen({
                   style={{
                     ...sectionButtonStyle,
                     background: isSelected ? "var(--bg-active)" : "transparent",
-                    color: isSelected ? "#fff" : "var(--text-muted)",
+                    color: isSelected ? "var(--text-main)" : "var(--text-muted)",
                   }}
                 >
                   <div style={sectionButtonTitleStyle}>{section.title}</div>
@@ -198,7 +198,7 @@ export function SettingsScreen({
                       void handleSave();
                     }}
                     disabled={!canSave}
-                    style={{ padding: "8px 16px", background: "var(--accent) !important", color: "#fff", border: "none" }}
+                    style={{ padding: "8px 16px", background: "var(--accent-blue)", color: "var(--text-main)", border: "none" }}
                   >
                     {isSaving ? "Saving..." : "Save changes"}
                   </button>
@@ -325,9 +325,9 @@ const sectionButtonStyle: React.CSSProperties = {
 };
 
 const selectedSectionButtonStyle: React.CSSProperties = {
-  background: "#262637",
-  borderColor: "#45475a",
-  color: "#cdd6f4",
+  background: "var(--bg-active)",
+  borderColor: "var(--border-subtle)",
+  color: "var(--text-main)",
 };
 
 const sectionButtonTitleStyle: React.CSSProperties = {
@@ -346,9 +346,9 @@ const sectionButtonDescriptionStyle: React.CSSProperties = {
 const backButtonStyle: React.CSSProperties = {
   padding: "7px 10px",
   borderRadius: 8,
-  border: "1px solid #45475a",
-  background: "#313244",
-  color: "#cdd6f4",
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-hover)",
+  color: "var(--text-main)",
   fontSize: 12,
   fontWeight: 600,
   cursor: "pointer",
@@ -410,7 +410,7 @@ const fieldLabelStyle: React.CSSProperties = {
   display: "block",
   fontSize: 14,
   fontWeight: 700,
-  color: "#cdd6f4",
+  color: "var(--text-main)",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -418,9 +418,9 @@ const inputStyle: React.CSSProperties = {
   marginTop: 10,
   padding: "12px 14px",
   borderRadius: 10,
-  border: "1px solid #45475a",
-  background: "#11111b",
-  color: "#cdd6f4",
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-sidebar)",
+  color: "var(--text-main)",
   fontSize: 15,
   outline: "none",
 };
@@ -438,7 +438,7 @@ const errorTextStyle: React.CSSProperties = {
   marginBottom: 0,
   fontSize: 13,
   lineHeight: 1.5,
-  color: "#f38ba8",
+  color: "var(--text-error)",
 };
 
 const actionsStyle: React.CSSProperties = {
@@ -459,15 +459,15 @@ const buttonBaseStyle: React.CSSProperties = {
 
 const secondaryButtonStyle: React.CSSProperties = {
   ...buttonBaseStyle,
-  borderColor: "#45475a",
+  borderColor: "var(--border-subtle)",
   background: "transparent",
-  color: "#cdd6f4",
+  color: "var(--text-main)",
 };
 
 const primaryButtonStyle: React.CSSProperties = {
   ...buttonBaseStyle,
-  background: "#89b4fa",
-  color: "#11111b",
+  background: "var(--accent-blue)",
+  color: "var(--text-main)",
 };
 
 const infoLabelStyle: React.CSSProperties = {
@@ -503,7 +503,7 @@ const infoRowValueStyle: React.CSSProperties = {
 const pathValueStyle: React.CSSProperties = {
   fontSize: 15,
   fontWeight: 600,
-  color: "#cdd6f4",
+  color: "var(--text-main)",
   wordBreak: "break-word",
 };
 

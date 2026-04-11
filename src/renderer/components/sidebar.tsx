@@ -182,7 +182,7 @@ export function Sidebar(props: SidebarProps): React.ReactElement {
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         {props.projects.length === 0 ? (
-          <div style={{ padding: "12px 16px", color: "#6c7086", fontSize: 14 }}>
+          <div style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: 14 }}>
             No projects yet.
           </div>
         ) : (
@@ -365,7 +365,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
                 border: "none",
                 padding: 0,
                 fontSize: 12,
-                color: "#f38ba8",
+                color: "var(--text-error)",
                 opacity: props.isBusy ? 0.5 : 0.8,
                 cursor: props.isBusy ? "not-allowed" : "pointer",
               }}
@@ -375,7 +375,7 @@ function ProjectItem({ project, props, setContextMenu }: any) {
           ) : (
             <div
               title="Project is encrypted"
-              style={{ fontSize: 12, color: "#a6adc8", opacity: 0.8 }}
+              style={{ fontSize: 12, color: "var(--text-muted)", opacity: 0.8 }}
             >
               🔓
             </div>
@@ -520,7 +520,7 @@ function ThreadItem({ thread, isActive, isEditing, onSelectThread, onSetEditingI
           textAlign: "left",
           padding: "5px 8px 5px 32px",
           fontSize: 12,
-          color: isActive ? "#fff" : "var(--text-muted)",
+          color: isActive ? "var(--text-main)" : "var(--text-muted)",
           background: "transparent",
           border: "none",
           cursor: "pointer",
@@ -542,9 +542,9 @@ const inlineInputStyle: React.CSSProperties = {
   width: "100%",
   padding: "2px 4px",
   borderRadius: 4,
-  border: "1px solid #89b4fa",
-  background: "#1e1e2e",
-  color: "#cdd6f4",
+  border: "1px solid var(--accent-blue)",
+  background: "rgba(255, 255, 255, 0.04)",
+  color: "var(--text-main)",
   fontSize: 13,
   outline: "none",
 };
@@ -552,9 +552,9 @@ const inlineInputStyle: React.CSSProperties = {
 const actionButtonStyle: React.CSSProperties = {
   padding: "7px 10px",
   borderRadius: 8,
-  border: "1px solid #45475a",
-  background: "#313244",
-  color: "#cdd6f4",
+  border: "1px solid var(--border-subtle)",
+  background: "var(--bg-hover)",
+  color: "var(--text-main)",
   fontSize: 13,
   fontWeight: 600,
   cursor: "pointer",
@@ -564,9 +564,9 @@ const iconButtonStyle: React.CSSProperties = {
   width: 28,
   height: 28,
   borderRadius: 8,
-  border: "1px solid #45475a",
+  border: "1px solid var(--border-subtle)",
   background: "transparent",
-  color: "#89b4fa",
+  color: "var(--accent-blue)",
   fontSize: 18,
   fontWeight: 600,
   cursor: "pointer",

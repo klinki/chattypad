@@ -104,7 +104,7 @@ const inputStyle: React.CSSProperties = {
 
 const errorStyle: React.CSSProperties = {
   marginBottom: 16,
-  color: "#f38ba8",
+  color: "var(--text-error)",
   fontSize: 13,
   lineHeight: 1.4,
 };
@@ -115,7 +115,7 @@ const buttonStyle: React.CSSProperties = {
   borderRadius: 8,
   border: "none",
   background: "var(--accent-blue)",
-  color: "#ffffff",
+  color: "var(--text-main)",
   fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",

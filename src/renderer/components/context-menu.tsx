@@ -53,7 +53,7 @@ function ContextMenuItem({ item, onClose }: { item: MenuItem; onClose: () => voi
         position: "relative",
         padding: "8px 14px",
         fontSize: 13,
-        color: item.danger ? "#f38ba8" : "var(--text-main)",
+        color: item.danger ? "var(--text-error)" : "var(--text-main)",
         cursor: "pointer",
         display: "flex",
         justifyContent: "space-between",

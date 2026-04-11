@@ -87,7 +87,7 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
               </svg>
             }
             title="Minimize"
-            hoverColor="#313244"
+            hoverColor="var(--bg-hover)"
           />
           <WindowButton
             onClick={handleMaximize}
@@ -95,7 +95,7 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
               isMaximized ? (
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M2.5 0.5H9.5V7.5H2.5V0.5Z" stroke="currentColor" strokeWidth="1" fill="transparent"/>
-                  <path d="M0.5 2.5H7.5V9.5H0.5V2.5Z" stroke="currentColor" strokeWidth="1" fill="#1e1e2e"/>
+                  <path d="M0.5 2.5H7.5V9.5H0.5V2.5Z" stroke="currentColor" strokeWidth="1" fill="var(--bg-sidebar)"/>
                 </svg>
               ) : (
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,7 +104,7 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
               )
             }
             title={isMaximized ? "Restore" : "Maximize"}
-            hoverColor="#313244"
+            hoverColor="var(--bg-hover)"
           />
           <WindowButton
             onClick={() => workspaceIpcClient.closeWindow()}
@@ -114,9 +114,9 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
               </svg>
             }
             title="Close"
-            hoverColor="#f38ba8"
-            hoverBgColor="#f38ba8"
-            hoverIconColor="#11111b"
+            hoverColor="var(--text-error)"
+            hoverBgColor="var(--text-error)"
+            hoverIconColor="var(--bg-darker)"
           />
         </div>
       ) : (
@@ -130,7 +130,7 @@ export function Header({ mode, subtitle, action }: HeaderProps) {
             />
           </div>
         ) : (
-          <div style={{ paddingRight: "16px", fontSize: "12px", color: "#6c7086" }}>
+          <div style={{ paddingRight: "16px", fontSize: "12px", color: "var(--text-muted)" }}>
             Native window controls
           </div>
         )
@@ -195,8 +195,8 @@ function WindowButton({ onClick, icon, title, hoverBgColor, hoverIconColor }: Wi
       onPointerLeave={() => setIsHovered(false)}
       title={title}
       style={{
-        background: isHovered ? (hoverBgColor || "#313244") : "transparent",
-        color: isHovered && hoverIconColor ? hoverIconColor : "#cdd6f4",
+        background: isHovered ? (hoverBgColor || "var(--bg-hover)") : "transparent",
+        color: isHovered && hoverIconColor ? hoverIconColor : "var(--text-main)",
         border: "none",
         width: "46px",
         height: "100%",

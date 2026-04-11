@@ -129,7 +129,7 @@ function ErrorState({ error }: { error: IpcError }): React.ReactElement {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        color: "#f38ba8",
+        color: "var(--text-error)",
         gap: 12,
         padding: 40,
       }}

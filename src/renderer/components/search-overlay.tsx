@@ -172,7 +172,7 @@ function SearchHint({
     <div
       style={{
         padding: "32px 20px",
-        color: tone === "error" ? "#f38ba8" : "#6c7086",
+        color: tone === "error" ? "var(--text-error)" : "var(--text-muted)",
         fontSize: 14,
         textAlign: "center",
       }}

@@ -131,8 +131,8 @@ export function MessageComposer({
           role="alert"
           style={{
             fontSize: 13,
-            color: "#f38ba8",
-            background: "#33182a",
+            color: "var(--text-error)",
+            background: "rgba(243, 139, 168, 0.1)",
             padding: "8px 10px",
             borderRadius: 6,
           }}
@@ -141,7 +141,7 @@ export function MessageComposer({
         </div>
       )}
       {showInlineHint && (
-        <div style={{ fontSize: 13, color: "#f9e2af" }}>
+        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
           Enter at least one non-whitespace character to send a message.
         </div>
       )}
@@ -191,7 +191,7 @@ export function MessageComposer({
             right: 8,
             bottom: 8,
             background: canSend ? "var(--accent-blue)" : "transparent",
-            color: canSend ? "#ffffff" : "var(--text-muted)",
+            color: canSend ? "var(--text-main)" : "var(--text-muted)",
             border: "none",
             borderRadius: 8,
             cursor: canSend ? "pointer" : "not-allowed",

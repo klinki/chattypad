@@ -643,7 +643,7 @@ function ProjectDialog({
               style={dialogInputStyle}
               disabled={isBusy}
             />
-            <p style={{ ...dialogCopyStyle, color: "#f38ba8", fontSize: 12, fontWeight: 600 }}>
+            <p style={{ ...dialogCopyStyle, color: "var(--text-error)", fontSize: 12, fontWeight: 600 }}>
               ⚠️ DATA IS IRRECOVERABLE: If you lose this password, your notes cannot be decrypted.
             </p>
           </>
@@ -722,7 +722,7 @@ function UnlockProjectDialog({
           }}
         />
         {errorMessage ? (
-          <p style={{ ...dialogCopyStyle, color: "#f38ba8", marginTop: 12 }}>{errorMessage}</p>
+          <p style={{ ...dialogCopyStyle, color: "var(--text-error)", marginTop: 12 }}>{errorMessage}</p>
         ) : null}
         <div style={dialogActionsStyle}>
           <button type="button" onClick={onClose} disabled={isBusy} style={dialogSecondaryButtonStyle}>
@@ -816,11 +816,11 @@ const dialogSecondaryButtonStyle: React.CSSProperties = {
 const dialogPrimaryButtonStyle: React.CSSProperties = {
   ...dialogButtonBaseStyle,
   background: "var(--accent-blue)",
-  color: "#ffffff",
+  color: "var(--text-main)",
 };
 
 const dialogDangerButtonStyle: React.CSSProperties = {
   ...dialogButtonBaseStyle,
-  background: "#f38ba8",
-  color: "#ffffff",
+  background: "var(--text-error)",
+  color: "var(--text-main)",
 };
