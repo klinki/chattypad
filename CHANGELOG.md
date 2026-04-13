@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/klinki/chattypad/compare/chattypad-v0.2.1...chattypad-v0.3.0) (2026-04-13)
+
+
+### Features
+
+* align composer background with sidebar and lighten textarea ([6839eb9](https://github.com/klinki/chattypad/commit/6839eb9e240088c44099403a05b838162ba07b95))
+* align Send button dimensions while preserving original colors ([1209856](https://github.com/klinki/chattypad/commit/12098567704fd981491786631f4d3199610e8a71))
+* apply translucent pod styling to message bubbles ([57437fd](https://github.com/klinki/chattypad/commit/57437fd7e682164b9917dab097062aebadd93a10))
+* implement custom top-edge resizer and remove native resize handle ([428ffb1](https://github.com/klinki/chattypad/commit/428ffb1b16d41cb9abf26ee52337a0a8ffef6770))
+* redesign UI with Codex-inspired minimalist aesthetic, hover effects, and animations ([83a74bd](https://github.com/klinki/chattypad/commit/83a74bdb8c8c4884b9e74bd1c64cb8ab37c2b207))
+* replace role labels with message timestamps in history view ([5a34efc](https://github.com/klinki/chattypad/commit/5a34efc6628858265e14d878dc48ade581ba02eb))
+* **search:** Add workspace search ([d23c657](https://github.com/klinki/chattypad/commit/d23c657594e32e90f55cea0344d770961665204d))
+* simplify Settings About page and unify layout ([36bdec0](https://github.com/klinki/chattypad/commit/36bdec0620dc1042497f396459bb0697fb13bc74))
+* **ui:** comprehensive UI/UX overhaul with minimalist design system ([03d7b7e](https://github.com/klinki/chattypad/commit/03d7b7eca27e91c8ce71119dae3808e5d07ff0f1))
+
 ## [0.2.1](https://github.com/klinki/chattypad/compare/chattypad-v0.2.0...chattypad-v0.2.1) (2026-04-03)
 
 
